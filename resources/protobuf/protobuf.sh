@@ -1,0 +1,7 @@
+export PROTOBUF_PREFIX=/usr/local/protobuf
+
+export PATH=$PROTOBUF_PREFIX/bin:$PATH
+
+export C_INCLUDE_PATH=$PROTOBUF_PREFIX/include
+export CPLUS_INCLUDE_PATH=$PROTOBUF_PREFIX/include
+export LIBRARY_PATH=$PROTOBUF_PREFIX/lib
