@@ -1,0 +1,9 @@
+[submodule "third_party/spark"]
+	path = third_party/spark
+	url = https://github.com/zheguang/spark.git
+[submodule "third_party/hadoop"]
+	path = third_party/hadoop
+	url = https://github.com/zheguang/hadoop.git
+[submodule "third_party/protobuf"]
+	path = third_party/protobuf
+	url = https://github.com/google/protobuf.git
