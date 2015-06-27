@@ -1,4 +1,5 @@
-PROJECT=$(dirname $0)/..
+LOCAL_PROJECT=$(readlink -f `dirname $0`)/..
+PROJECT=/vagrant
 RESOURCES=$PROJECT/resources
 
 INSTALL=/usr/local
@@ -32,3 +33,8 @@ function assertExists {
     return 1
   fi
 }
+
+function log {
+  echo "[INFO] $@" >&1
+}
+

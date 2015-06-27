@@ -1,53 +1,64 @@
-#!bin/bash
+#!/bin/bash
 set -e
 
-source $(dirname $0)/common.sh
+source /vagrant/scripts/common.sh
 
 function initThirdParty {
-  echo "init third-party submodules"
-  git submodule update --init
+  log "init third-party submodules"
+  (cd $PROJECT && git submodule update --init)
   (cd $HADOOP_GIT && git checkout branch-$HADOOP_VER-master)
   (cd $SPARK_GIT && git checkout branch-$SPARK_VER-master)
   (cd $PROTOBUF_GIT && git checkout v$PROTOBUF_VER-master)
 }
 
 function installProtobuf_ {
+  log "build protobuf"
   ./autogen.sh
   ./configure --prefix=$INSTALL/protobuf-$PROTOBUF_VER
-  make
-  make check
+  make clean
+  make -j
   make install
+  tar cf $PROTOBUF_GIT/protobuf-$PROTOBUF_VER.tar $INSTALL/protobuf-$PROTOBUF_VER 
 }
 
-function installProtobuf {
-  echo "install protobuf"
-  (cd $PROTOBUF_GIT && installProtobuf_)
+function setupProtobuf {
+  log "install protobuf"
+  #(cd $PROTOBUF_GIT && installProtobuf_)
+  assertExists $PROTOBUF_GIT/protobuf-$PROTOBUF_VER.tar
+  tar xf $PROTOBUF_GIT/protobuf-$PROTOBUF_VER.tar -C $INSTALL
   ln -s $INSTALL/protobuf-$PROTOBUF_VER $INSTALL/protobuf
   assertExists $INSTALL/protobuf
 }
 
 function installHadoopDeps {
-  echo "install hadoop deps"
+  log "install hadoop deps"
   apt-get -y install build-essential autoconf automake pkg-config
   apt-get -y install openjdk-7-jdk openjdk-7-jre openjdk-7-jre-lib 
   apt-get -y install libtool cmake zlib1g-dev libssl-dev
 }
 
+function installPackages {
+  apt-get -y install make gcc g++ python python-numpy git cmake ant
+}
+
 function setupJavaEnvVars {
-  echo "create java environment variables"
+  log "create java environment variables"
+  ln -s /usr/lib/jvm/java-7-openjdk-amd64 $INSTALL/java
   cp -f $RESOURCES/java/java.sh /etc/profile.d/java.sh
 }
 
 function setupProtobufEnvVars {
-  echo "set up protobuf environment variables"
+  log "set up protobuf environment variables"
   cp -f $RESOURCES/protobuf/protobuf.sh /etc/profile.d/protobuf.sh
 }
 
 function main {
-  initThirdParty
-
   installHadoopDeps
-  installProtobuf
+  installPackages
+
+  #initThirdParty
+
+  setupProtobuf
 
   setupJavaEnvVars
   setupProtobufEnvVars
