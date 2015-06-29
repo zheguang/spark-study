@@ -7,6 +7,7 @@ RUNTIME=/var
 
 PROTOBUF_GIT=$PROJECT/third_party/protobuf
 PROTOBUF_VER=2.5.0
+PROTOBUF_ARCHIVE=protobuf-$PROTOBUF_VER.tar
 
 HADOOP_GIT=$PROJECT/third_party/hadoop
 HADOOP_VER_MAJOR=2.4

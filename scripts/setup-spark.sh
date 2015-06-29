@@ -28,8 +28,8 @@ function parseArgs {
 function installSpark {
   log "install spark"
   #./make-distribution.sh --skip-java-test --name hadoop-$HADOOP_VER_MAJOR --tgz -Phadoop-$HADOOP_VER_MAJOR -Pyarn
-  assertExists $SPARK_GIT/$SPARK_ARCHIVE
-  tar -xzf $SPARK_GIT/$SPARK_ARCHIVE -C $INSTALL
+  assertExists $RESOURCES/$SPARK_ARCHIVE
+  tar -xzf $RESOURCES/$SPARK_ARCHIVE -C $INSTALL
   ln -s $INSTALL/${SPARK_ARCHIVE%.*} $INSTALL/spark
   assertExists $INSTALL/spark
 }

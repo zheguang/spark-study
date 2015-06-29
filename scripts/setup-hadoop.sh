@@ -28,8 +28,8 @@ function parseArgs {
 function installHadoop {
   log "install hadoop"
   #(cd $HADOOP_GIT && $MAVEN clean package -DskipTests -Dtar -Pdist,native)
-  assertExists $HADOOP_GIT/hadoop-dist/target/$HADOOP_ARCHIVE
-  tar -xzf $HADOOP_GIT/hadoop-dist/target/$HADOOP_ARCHIVE -C $INSTALL
+  assertExists $RESOURCES/$HADOOP_ARCHIVE
+  tar -xzf $RESOURCES/$HADOOP_ARCHIVE -C $INSTALL
   ln -s $INSTALL/${HADOOP_ARCHIVE%.*.*} $INSTALL/hadoop
   assertExists $INSTALL/hadoop
 }

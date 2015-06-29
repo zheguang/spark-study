@@ -18,15 +18,15 @@ function installProtobuf_ {
   make clean
   make -j
   make install
-  tar cf $PROTOBUF_GIT/protobuf-$PROTOBUF_VER.tar $INSTALL/protobuf-$PROTOBUF_VER 
+  tar cf $RESOURCES/$PROTOBUF_ARCHIVE $INSTALL/protobuf-$PROTOBUF_VER 
 }
 
 function setupProtobuf {
   log "install protobuf"
   #(cd $PROTOBUF_GIT && installProtobuf_)
-  assertExists $PROTOBUF_GIT/protobuf-$PROTOBUF_VER.tar
-  tar xf $PROTOBUF_GIT/protobuf-$PROTOBUF_VER.tar -C $INSTALL
-  ln -s $INSTALL/protobuf-$PROTOBUF_VER $INSTALL/protobuf
+  assertExists $RESOURCES/$PROTOBUF_ARCHIVE
+  tar xf $RESOURCES/$PROTOBUF_ARCHIVE -C $INSTALL
+  ln -s $INSTALL/${PROTOBUF_ARCHIVE%.*} $INSTALL/protobuf
   assertExists $INSTALL/protobuf
 }
 
