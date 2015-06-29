@@ -1,0 +1,73 @@
+== File name too long ==
+Source: https://github.com/apache/spark/pull/2883/files
+In pom.xml -> scala->maven-plugin -> args:
+<arg>-Xmax-classfile-name</arg>
+<arg>128</arg>
+
+project/SparkBuild.scala -> sharedSettings:
+scalacOptions in Compile ++= Seq("-Xmax-classfile-name", "128"),
+
+== Dependency ==
+Nothing but Java.  Spark comes with maven, scala and sbt in the source tree.
+
+== Build with build/mvn ==
+export MAVEN_OPTS="-Xmx2g -XX:MaxPermSize=512M -XX:ReservedCodeCacheSize=512m"
+build/mvn -Pyarn -Phadoop-2.4 -Dhadoop.version=2.4.0 -DskipTests clean package
+
+== Run test ==
+Prereq: 
+build/mvn -Pyarn -Phadoop-2.4 -Phive -Phive-thriftserver -Dhadoop.version=2.4.0 -DskipTests clean package
+build/mvn -Pyarn -Phadoop-2.3 -Phive -Phive-thriftserver -DskipTests clean package
+
+build/mvn -Pyarn -Phadoop-2.4 -Dhadoop.version=2.4.0 test
+build/mvn -Pyarn -Phadoop-2.3 test
+
+== Build dist ==
+./make-distribution.sh --name sam-spark --tgz -Phadoop-2.3 -Pyarn
+cd <project root>
+mkdir -p src/main/resources src/main/scala src/main/java test/resources test/scala test/java lib_managed lib
+echo 'scalaVersion := "2.11.5"' > build.sbt
+import project to Intellij using "Scala -> Sbt" option.
+
+
+== Spark cluster mode ==
+https://spark.apache.org/docs/latest/cluster-overview.html
+
+== RDD Persistence ==
+https://spark.apache.org/docs/latest/programming-guide.html#rdd-persistence
+
+== Spark job scheduling == 
+https://spark.apache.org/docs/latest/job-scheduling.html
+
+== cluster management ==
+yarn node -list -all
+hadoop dfsadmin -report
+
+== submit jar to standalone mode ==
+bin/spark-submit --master local[*] --class org.apache.spark.examples.sam.SamWordCount "examples/target/scala-2.10/spark-examples-1.5.0-SNAPSHOT-hadoop2.3.0.jar"
+
+== hadoop admin ==
+hdfs getconf -namenodes
+hdfs namenode -format
+
+== hadoop admin vagrant-spark-hadoop doc ==
+su # password: vagrant
+
+$HADOOP_PREFIX/bin/hdfs namenode -format
+$HADOOP_PREFIX/sbin/hadoop-daemon.sh --config $HADOOP_CONF_DIR --script hdfs start namenode
+$HADOOP_PREFIX/sbin/hadoop-daemons.sh --config $HADOOP_CONF_DIR --script hdfs start datanode
+
+# Yarn
+$HADOOP_YARN_HOME/sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR start resourcemanager
+$HADOOP_YARN_HOME/sbin/yarn-daemons.sh --config $HADOOP_CONF_DIR start nodemanager
+$HADOOP_YARN_HOME/sbin/yarn-daemon.sh start proxyserver --config $HADOOP_CONF_DIR
+$HADOOP_PREFIX/sbin/mr-jobhistory-daemon.sh start historyserver --config $HADOOP_CONF_DIR
+
+# Test yarn
+yarn jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.4.1.jar pi 2 100
+
+# Or Spark Standalone Mode.
+#$SPARK_HOME/sbin/start-all.sh
+
+# sbt
+sbt clean compile
