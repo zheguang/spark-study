@@ -69,5 +69,20 @@ yarn jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.4.
 # Or Spark Standalone Mode.
 #$SPARK_HOME/sbin/start-all.sh
 
-# sbt
+== sbt, intellij, study ==
 sbt clean compile
+
+# set up Scala SDK in intellij
+# Project structures -> Global libraries -> + -> either 'Download' or 'Browse' to the ScalaHome.
+
+== spark standalone ==
+# make sure $SPARK_HOME/conf/slaves is populated.
+$SPARK_HOME/sbin/start-{master,slaves,all}
+$SPARK_HOME/sbin/stop-{master,slaves,all}
+
+$SPARK_HOME/spark-shell --master spark://IP:PORT  # Can get spark://IP:PORT info from UI at port 8080. 
+
+== hadoop web UI == 
+http://<node>:50070/ # web UI of the NameNode daemon
+http://<node>:50030/ # web UI of the JobTracker daemon
+http://<node>:50060/ # web UI of the TaskTracker daemon
