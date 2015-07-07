@@ -10,9 +10,9 @@ class HelloWorld
 
 object Main
 {
-  def main(args: Array[String]) =
+  /*def main(args: Array[String]) =
   {
     val h = new HelloWorld()
     h.greet()
-  }
+  }*/
 }

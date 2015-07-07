@@ -86,3 +86,11 @@ $SPARK_HOME/spark-shell --master spark://IP:PORT  # Can get spark://IP:PORT info
 http://<node>:50070/ # web UI of the NameNode daemon
 http://<node>:50030/ # web UI of the JobTracker daemon
 http://<node>:50060/ # web UI of the TaskTracker daemon
+
+== spark with scala 2.11 ==
+dev/change-version-to-2.11.sh
+build/mvn -Pyarn -Phadoop-2.4 -Dscala-2.11 -DskipTests clean package
+./make-distribution.sh --name hadoop-2.4-scala-2.11 --tgz -Pyarn -Phadoop-2.4 -Dscala-2.11 -DskipTests
+
+== Anntation class declaration not found in Intellij ==
+Project Structures -> Modules -> set each modeule's Language Level to >6
