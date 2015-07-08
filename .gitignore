@@ -6,3 +6,6 @@ runtime/
 target/
 .idea
 data/
+*.out
+*.o
+*.dat

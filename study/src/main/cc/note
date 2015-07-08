@@ -1,0 +1,54 @@
+// -*- mode: cpp -*-
+// vi: set ft=cpp :
+
+num_users = atoi(argv[2]);
+num_movies = atoi(argv[3]);
+
+num_user_movie_rating = atoi(argv[4]);
+
+num_procs = atoi(argv[5]);
+
+
+edge *user_movie_ratings; // num_user_movie_rating
+user_movie_ratings[i].user
+user_movie_ratings[i].movie
+user_movie_ratings[i].rating
+
+double *U_mat; // Users matrix in latent space, NLATENT * num_users
+double *V_mat; // Movies matrix in latent space, NLATENT * num_movies
+
+// Initialize elements in U_mat and V_mat to random numbers between -1 and 1.
+
+// Separate edges in user_movie_ratings into tiles.
+// Each tile is a vector which stores the edge ids that belong to it.
+// Each edge id is an index in the user_movie_ratings array.
+tiles[][] // (num_nodes * num_procs)^2
+tiles[0][] = edge_ids[.]
+tiles[1][] = edge_ids[.]
+...
+tiles[num_nodes * num_procs][] = edge_ids[.]
+
+
+l <- 0 ... num_nodes
+  
+  row <- 0
+  col <- l
+  rows <- [row ... num_nodes % wrap around]
+  cols <- [col ... num_nodes % wrap around]
+
+  k <- 0 ... num_nodes
+    // work on my own per-node tiles
+    pidx1 <- 0 .. num_procs
+      u_tn <- [][]
+      m_tn <- [][]
+
+      rowp <- 0
+      colp <- pidx1
+
+      rowsp <- [rowp ... num_procs % wrap around]
+      colsp <- [colp ... num_procs % wrap around]
+
+      pidx2 <- 0 .. num_procs
+        // work on my own per-core tile
+        tile <- // shift #tiles per-node, then shift #tiles per-core
+        compute on tile
