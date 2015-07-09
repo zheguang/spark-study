@@ -1,9 +1,17 @@
 #!/bin/bash
 set -e
 
+NUM_ITERS=5
+
 source /opt/intel/bin/compilervars.sh intel64
 export LD_LIBRARY_PATH=/opt/intel/composer_xe_2015.3.187/compiler/lib/intel64:/opt/intel/composer_xe_2015.3.187/mpirt/lib/intel64:$LD_LIBRARY_PATH
 export LIBRARY_PATH=/opt/intel/composer_xe_2015.3.187/compiler/lib/intel64:/opt/intel/composer_xe_2015.3.187/mpirt/lib/intel64:$LIBRARY_PATH
+
+datafile=$1
+nusers=$2
+nmovies=$3
+nratings=$((nusers * nmovies))
+nthreads=4
 
 function setup() {
   echo "[INFO] set up"
@@ -18,9 +26,12 @@ function compile() {
 
 function do_bench() {
   exe_path_=$1
-  for i in `seq 1 10`; do
+  >&2 echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
+  echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
+  for i in $(seq 1 $NUM_ITERS); do
     echo "Iteration: $i"
-    $exe_path_ ratings_u10_v9.dat $((1 << 10)) $((1 << 9)) $((1 << 19)) 4
+    #$exe_path_ ratings_u10_v9.dat $((1 << 10)) $((1 << 9)) $((1 << 19)) 4
+    $exe_path_ $datafile $nusers $nmovies $nratings $nthreads
     echo -e "\n"
   done
 }
@@ -28,6 +39,6 @@ function do_bench() {
 setup
 compile
 echo "[INFO] start benchmark"
-do_bench bench/sgd_single_intel.out > bench/sgd_single_intel.result
-do_bench bench/sgd_single_intel_blas.out > bench/sgd_single_intel_blas.result
+do_bench bench/sgd_single_intel.out 1> bench/sgd_single_intel.result
+do_bench bench/sgd_single_intel_blas.out 1> bench/sgd_single_intel_blas.result
 echo "[INFO] done all benchmark."
