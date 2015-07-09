@@ -35,7 +35,7 @@
 #endif
 
 #ifdef BLAS
-#include <cblas.h>
+#include <mkl.h>
 #endif
 
 typedef struct {
