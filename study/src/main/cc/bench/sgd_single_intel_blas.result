@@ -1,0 +1,120 @@
+Iteration: 1
+Use blas.
+Time in data read 96.485080 (ms)
+Time in U-V mat init 0.393973 (ms)
+Time in iteration 0 of sgd 15.331740 (ms) 
+Time in iteration 1 of sgd 10.788581 (ms) 
+Time in iteration 2 of sgd 10.840933 (ms) 
+Time in iteration 3 of sgd 10.823237 (ms) 
+Time in iteration 4 of sgd 10.808588 (ms) 
+Training rmse 6.208722
+
+
+Iteration: 2
+Use blas.
+Time in data read 96.469120 (ms)
+Time in U-V mat init 0.393070 (ms)
+Time in iteration 0 of sgd 15.667831 (ms) 
+Time in iteration 1 of sgd 10.905446 (ms) 
+Time in iteration 2 of sgd 11.018050 (ms) 
+Time in iteration 3 of sgd 11.123027 (ms) 
+Time in iteration 4 of sgd 11.081305 (ms) 
+Training rmse 6.208722
+
+
+Iteration: 3
+Use blas.
+Time in data read 96.770649 (ms)
+Time in U-V mat init 0.397136 (ms)
+Time in iteration 0 of sgd 15.648206 (ms) 
+Time in iteration 1 of sgd 11.096351 (ms) 
+Time in iteration 2 of sgd 11.023339 (ms) 
+Time in iteration 3 of sgd 11.095772 (ms) 
+Time in iteration 4 of sgd 11.153099 (ms) 
+Training rmse 6.208722
+
+
+Iteration: 4
+Use blas.
+Time in data read 96.206089 (ms)
+Time in U-V mat init 0.396357 (ms)
+Time in iteration 0 of sgd 14.181044 (ms) 
+Time in iteration 1 of sgd 10.961839 (ms) 
+Time in iteration 2 of sgd 10.910524 (ms) 
+Time in iteration 3 of sgd 10.913797 (ms) 
+Time in iteration 4 of sgd 10.892683 (ms) 
+Training rmse 6.208722
+
+
+Iteration: 5
+Use blas.
+Time in data read 96.208098 (ms)
+Time in U-V mat init 0.399736 (ms)
+Time in iteration 0 of sgd 14.274680 (ms) 
+Time in iteration 1 of sgd 11.033089 (ms) 
+Time in iteration 2 of sgd 11.070154 (ms) 
+Time in iteration 3 of sgd 11.042234 (ms) 
+Time in iteration 4 of sgd 11.141551 (ms) 
+Training rmse 6.208722
+
+
+Iteration: 6
+Use blas.
+Time in data read 96.148130 (ms)
+Time in U-V mat init 0.395856 (ms)
+Time in iteration 0 of sgd 15.330539 (ms) 
+Time in iteration 1 of sgd 10.833119 (ms) 
+Time in iteration 2 of sgd 11.725274 (ms) 
+Time in iteration 3 of sgd 10.685877 (ms) 
+Time in iteration 4 of sgd 10.815659 (ms) 
+Training rmse 6.208722
+
+
+Iteration: 7
+Use blas.
+Time in data read 96.359782 (ms)
+Time in U-V mat init 0.394170 (ms)
+Time in iteration 0 of sgd 14.799656 (ms) 
+Time in iteration 1 of sgd 11.044560 (ms) 
+Time in iteration 2 of sgd 11.070979 (ms) 
+Time in iteration 3 of sgd 11.022481 (ms) 
+Time in iteration 4 of sgd 10.989013 (ms) 
+Training rmse 6.208722
+
+
+Iteration: 8
+Use blas.
+Time in data read 96.088844 (ms)
+Time in U-V mat init 0.394249 (ms)
+Time in iteration 0 of sgd 17.201327 (ms) 
+Time in iteration 1 of sgd 10.700133 (ms) 
+Time in iteration 2 of sgd 10.843407 (ms) 
+Time in iteration 3 of sgd 10.875224 (ms) 
+Time in iteration 4 of sgd 10.895039 (ms) 
+Training rmse 6.208722
+
+
+Iteration: 9
+Use blas.
+Time in data read 96.314403 (ms)
+Time in U-V mat init 0.400877 (ms)
+Time in iteration 0 of sgd 17.785133 (ms) 
+Time in iteration 1 of sgd 11.012507 (ms) 
+Time in iteration 2 of sgd 10.994013 (ms) 
+Time in iteration 3 of sgd 10.894138 (ms) 
+Time in iteration 4 of sgd 10.760680 (ms) 
+Training rmse 6.208722
+
+
+Iteration: 10
+Use blas.
+Time in data read 96.995203 (ms)
+Time in U-V mat init 0.401671 (ms)
+Time in iteration 0 of sgd 15.593850 (ms) 
+Time in iteration 1 of sgd 11.046308 (ms) 
+Time in iteration 2 of sgd 10.980767 (ms) 
+Time in iteration 3 of sgd 11.023264 (ms) 
+Time in iteration 4 of sgd 11.414119 (ms) 
+Training rmse 6.208722
+
+

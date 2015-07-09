@@ -30,6 +30,14 @@
 #include <set>
 #include <omp.h>
 
+#ifdef __GNUC__
+#include "rdtsc.h"
+#endif
+
+#ifdef BLAS
+#include <cblas.h>
+#endif
+
 typedef struct {
     int user;
     int movie;
@@ -56,8 +64,13 @@ inline
 double dotP(const double *source1, const double *source2) 
 {
     double result=0;
-    for (size_t i = 0; i < NLATENT; ++i)
+#ifdef BLAS
+    cblas_ddot(NLATENT, source1, 1, source2, 1);
+#else
+    for (size_t i = 0; i < NLATENT; ++i) {
         result += source1[i] * source2[i];
+    }
+#endif
 
     return result;
 }
@@ -70,6 +83,10 @@ int main(int argc, char** argv) {
         printf("Syntax: %s <filename> <nusers> <nmovies> <nratings> <nthreads>\n", argv[0]);
         exit(123);
     }
+
+#ifdef BLAS
+  printf("Use blas.\n");
+#endif
 
     FILE *fp;
     fp = fopen(argv[1], "ro");
@@ -84,12 +101,20 @@ int main(int argc, char** argv) {
 
     // Read in data
     unsigned long long tbegin, tend;
+#ifdef __GNUC__
+    tbegin = rdtsc();
+#else
     tbegin = __rdtsc();
+#endif
     for (size_t i = 0; i < num_user_movie_rating; ++i)
         fscanf(fp, "%d %d %d\n", &(user_movie_ratings[i].user),
                &(user_movie_ratings[i].movie), 
                &(user_movie_ratings[i].rating));
+#ifdef __GNUC__
+    tend = rdtsc();
+#else
     tend = __rdtsc();
+#endif
     printf("Time in data read %f (ms)\n",  ((tend - tbegin)/cpu_freq) * 1000);
 
 
@@ -121,7 +146,11 @@ int main(int argc, char** argv) {
 
     std::srand(4562727);
 
+#ifdef __GNUC__
+    tbegin = rdtsc();
+#else
     tbegin = __rdtsc();
+#endif
     // Generate random numbers between -1 and 1 just like Eigen's setRandom()
     for (size_t i = 0; i < num_users; ++i)
     {
@@ -136,7 +165,11 @@ int main(int argc, char** argv) {
         for (size_t j = 0; j < NLATENT; ++j)
             V_mat[i*NLATENT + j] = (-1) + 2 * (std::rand()/float(RAND_MAX));
     }
+#ifdef __GNUC__
+    tend = rdtsc();
+#else
     tend = __rdtsc();
+#endif
 
     printf("Time in U-V mat init %f (ms)\n",  ((tend - tbegin)/cpu_freq) * 1000);
 
@@ -227,7 +260,11 @@ int main(int argc, char** argv) {
     // exit(1);
     for (size_t itr = 0; itr < max_iter; itr++)
     {
+#ifdef __GNUC__
+    tbegin = rdtsc();
+#else
     tbegin = __rdtsc();
+#endif
     for (size_t l = 0; l < num_nodes; ++l)
     {
         int row = 0;
@@ -372,7 +409,11 @@ int main(int argc, char** argv) {
 
     }
     GAMMA *= STEP_DEC;
+#ifdef __GNUC__
+    tend = rdtsc();
+#else
     tend = __rdtsc();
+#endif
     printf("Time in iteration %ld of sgd %f (ms) \n", itr, ((tend - tbegin)/cpu_freq)* 1000);
     }
 

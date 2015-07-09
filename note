@@ -94,3 +94,8 @@ build/mvn -Pyarn -Phadoop-2.4 -Dscala-2.11 -DskipTests clean package
 
 == Anntation class declaration not found in Intellij ==
 Project Structures -> Modules -> set each modeule's Language Level to >6
+
+== netlib perf ==
+gcc -c common.c
+gcc -c ddottest.c
+gcc common.o ddottest.o -lblas -lm

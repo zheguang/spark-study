@@ -1,19 +1,26 @@
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-int main() {
-  int num_users = 1 << 5;
-  int num_movies = 1 << 4;
+int main(int argc, char* argv[]) {
+  if (argc - 1 != 3) {
+    fprintf(stderr, "usage: data_gen.out <filename> <num_users> <num_movies>\n");
+    exit(1);
+  }
 
-  FILE* file = fopen("ratings.dat", "w");
+  const char* fname = argv[1];
+  int num_users = atoi(argv[2]);
+  int num_movies = atoi(argv[3]);
+
+  FILE* file = fopen(fname, "w");
   if (file == NULL) {
-    perror("fopen");
+    perror(fname);
     exit(1);
   }
 
   for (int i = 0; i < num_users; i++) {
     for (int j = 0; j < num_movies; j++) {
-      fprintf(file, "%d %d %d\n", i, j, rand() % 10 + 1);
+      fprintf(file, "%d %d %d\n", i+1, j+1, rand() % 10 + 1);
     }
   }
 
