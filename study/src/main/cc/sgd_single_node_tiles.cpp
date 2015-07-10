@@ -47,7 +47,7 @@ typedef struct {
 unsigned int num_user_movie_rating = 99072112;
 unsigned int num_users = 480189;
 unsigned int num_movies = 17770;
-const unsigned int NLATENT = 20;
+const unsigned int NLATENT = 200;
 const double MAXVAL = 1e+100;
 const double MINVAL = -1e+100;
 const double LAMBDA = 0.001;
@@ -65,7 +65,7 @@ double dotP(const double *source1, const double *source2)
 {
     double result=0;
 #ifdef BLAS
-    cblas_ddot(NLATENT, source1, 1, source2, 1);
+    result += cblas_ddot(NLATENT, source1, 1, source2, 1);
 #else
     for (size_t i = 0; i < NLATENT; ++i) {
         result += source1[i] * source2[i];

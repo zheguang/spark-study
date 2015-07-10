@@ -1,17 +1,19 @@
 #!/bin/bash
 set -e
 
-NUM_ITERS=5
+NUM_ITERS=2
 
 source /opt/intel/bin/compilervars.sh intel64
-export LD_LIBRARY_PATH=/opt/intel/composer_xe_2015.3.187/compiler/lib/intel64:/opt/intel/composer_xe_2015.3.187/mpirt/lib/intel64:$LD_LIBRARY_PATH
-export LIBRARY_PATH=/opt/intel/composer_xe_2015.3.187/compiler/lib/intel64:/opt/intel/composer_xe_2015.3.187/mpirt/lib/intel64:$LIBRARY_PATH
+#export LD_LIBRARY_PATH=/opt/intel/composer_xe_2015.3.187/compiler/lib/intel64:/opt/intel/composer_xe_2015.3.187/mpirt/lib/intel64:$LD_LIBRARY_PATH
+#export LIBRARY_PATH=/opt/intel/composer_xe_2015.3.187/compiler/lib/intel64:/opt/intel/composer_xe_2015.3.187/mpirt/lib/intel64:$LIBRARY_PATH
+export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:/usr/include/x86_64-linux-gnu/c++/4.8
 
 datafile=$1
 nusers=$2
 nmovies=$3
-nratings=$((nusers * nmovies))
-nthreads=4
+#nratings=$((nusers * nmovies))
+nratings=$4
+nthreads=$5
 
 function setup() {
   echo "[INFO] set up"
