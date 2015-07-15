@@ -27,8 +27,11 @@ tiles[0][] = edge_ids[.]
 tiles[1][] = edge_ids[.]
 ...
 tiles[num_nodes * num_procs][] = edge_ids[.]
+// Specifically, tiles is chaining hash table, where each entry in user_movie_ratings
+// are hashed based on .user and .movie.
 
 
+// stairway parallelism
 l <- 0 ... num_nodes
   
   row <- 0
@@ -39,9 +42,6 @@ l <- 0 ... num_nodes
   k <- 0 ... num_nodes
     // work on my own per-node tiles
     pidx1 <- 0 .. num_procs
-      u_tn <- [][]
-      m_tn <- [][]
-
       rowp <- 0
       colp <- pidx1
 
