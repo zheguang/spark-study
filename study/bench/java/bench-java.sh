@@ -1,10 +1,17 @@
-#!bin/bash
+#!/bin/bash
 set -e
 
 root=$(readlink -f `dirname $0`)/../..
 my_bench=$(dirname $0)
 
-source /opt/intel/bin/compilervars.sh intel64
+#source /opt/intel/bin/compilervars.sh intel64
+
+function check_mkl() {
+  if ! ldconfig -p | grep mkl &>/dev/null; then
+    >&2 echo "[error] mkl libary is not found in system cache."
+    exit 1
+  fi
+}
 
 function setup() {
   echo "[INFO] set up"
@@ -26,15 +33,17 @@ function do_bench() {
   nthreads=8
 
   exe_path_=com.intel.sparkstudy.matrix.JavaSgdSingleNodeTiles
-  >&2 echo "$exe_path_ $mode $datafile $nusers $nmovies $nratings $nthreads"
+  >&2 echo "$exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
   echo "$exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
   #java -cp target/scala-2.11/study-assembly-0.1-SNAPSHOT.jar com.intel.sparkstudy.matrix.JavaSgdSingleNodeTiles $mode $root/src/main/cc/ratings_u10_v9.dat $((1 << 10)) $((1 << 9)) $((1 << 19)) 4
-  java -cp $fatJar $exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads 
+  java -cp $fatJar $exe_path_ $mode $latent $root/src/main/cc/ratings_u10_v9.dat $((1 << 10)) $((1 << 9)) $((1 << 19)) 4
+  #java -cp $fatJar $exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads 
 }
 
-algebra_modes=("java" "blas")
+algebra_modes=("blas" "java")
 
-setup
+check_mkl
+#setup
 compile
 
 echo "[INFO] start benchmark"
