@@ -6,8 +6,10 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.concurrent.*;
 
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.*;
@@ -87,6 +89,7 @@ public class JavaSgdSingleNodeTiles {
         final int num_nodes = 2;
         final Edge[] user_movie_ratings = new Edge[num_user_movie_ratings];
         final Random randGen = new Random(4562727);
+        final ExecutorService procsPool = Executors.newFixedThreadPool(num_procs);
 
         System.out.println("algebra_mode=" + algebra_mode);
         System.out.println("filename=" + filename);
@@ -197,47 +200,33 @@ public class JavaSgdSingleNodeTiles {
                         }
 
                         // This loop needs to be parallelized ovre cores
-                        for(int pidx2 = 0; pidx2 < num_procs; ++pidx2)
-                        {
-                            ArrayList<Integer> v =
-                                tilesMat.get(rows[k] * num_procs * num_nodes * num_procs +
-                                        cols[k] * num_procs +
-                                        rowsp[pidx2] * (num_procs * num_nodes) +
-                                        colsp[pidx2]);
-
-                            // printf("%d %d %d %d %d\n",
-                            // rows[k], cols[k], rowsp[pidx2], colsp[pidx2],
-                            // rows[k] * num_procs * num_nodes * num_procs +
-                            // cols[k] * num_procs +
-                            // rowsp[pidx2] * (num_procs * num_nodes) +
-                            // colsp[pidx2]);
-
-
-                            for(int idx = 0; idx < v.size(); ++idx)
-                            {
-                                final int i = v.get(idx);
-                                int user_id = user_movie_ratings[i].user;
-                                int movie_id = user_movie_ratings[i].movie;
-
-                                double pred = algebran.dotP(U_mat, (user_id-1) * NLATENT,
-                                V_mat, (movie_id-1) * NLATENT);
-
-                                // Truncate pred
-                                pred = min(MAXVAL, pred);
-                                pred = max(MINVAL, pred);
-
-                                double err = (pred - user_movie_ratings[i].rating);
-
-                                for (int j = 0; j < NLATENT; ++j)
-                                    U_mat[(user_id-1) * NLATENT + j] +=
-                                            -GAMMA * (err*V_mat[(movie_id-1) * NLATENT + j] +
-                                                    LAMBDA * U_mat[(user_id-1) * NLATENT + j]);
-
-                                for (int j = 0; j < NLATENT; ++j)
-                                    V_mat[(movie_id-1) * NLATENT + j] +=
-                                            -GAMMA * (err*U_mat[(user_id-1) * NLATENT + j] +
-                                                    LAMBDA * V_mat[(movie_id-1) * NLATENT + j]);
+                        List<Callable<Boolean>> tasks = new ArrayList<>(num_procs);
+                        for(int pidx2 = 0; pidx2 < num_procs; ++pidx2) {
+                            final int PIDX2 = pidx2;
+                            final int K = k;
+                            final double Gamma = GAMMA;
+                            tasks.add(() -> {
+                                processOneTile(
+                                        algebran,
+                                        tilesMat.get(
+                                                rows[K] * num_procs * num_nodes * num_procs +
+                                                        cols[K] * num_procs +
+                                                        rowsp[PIDX2] * (num_procs * num_nodes) +
+                                                        colsp[PIDX2]), user_movie_ratings, U_mat, V_mat, Gamma);
+                                return true;
+                            });
+                        }
+                        try {
+                            List<Future<Boolean>> procsFutures = procsPool.invokeAll(tasks);
+                            for (Future<Boolean> f : procsFutures) {
+                                boolean status = f.get();
+                                if (!status) {
+                                    throw new SparkStudyError("Unexpected error in per tile work.");
+                                }
                             }
+                        } catch (InterruptedException | ExecutionException e) {
+                            e.printStackTrace();
+                            System.exit(123);
                         }
                     }
                 }
@@ -262,5 +251,47 @@ public class JavaSgdSingleNodeTiles {
         }
         train_err = sqrt(train_err / num_user_movie_ratings);
         System.out.printf("Training rmse %f\n", train_err);
+
+        procsPool.shutdown();
+        assert procsPool.isTerminated();
+    }
+
+    private static void processOneTile(Algebran algebran, ArrayList<Integer> tile, Edge[] user_movie_ratings, double[] u_mat, double[] v_mat, double GAMMA) {
+        ArrayList<Integer> v =
+                tile;
+
+        // printf("%d %d %d %d %d\n",
+        // rows[k], cols[k], rowsp[pidx2], colsp[pidx2],
+        // rows[k] * num_procs * num_nodes * num_procs +
+        // cols[k] * num_procs +
+        // rowsp[pidx2] * (num_procs * num_nodes) +
+        // colsp[pidx2]);
+
+
+        for(int idx = 0; idx < v.size(); ++idx)
+        {
+            final int i = v.get(idx);
+            int user_id = user_movie_ratings[i].user;
+            int movie_id = user_movie_ratings[i].movie;
+
+            double pred = algebran.dotP(u_mat, (user_id-1) * NLATENT,
+                    v_mat, (movie_id-1) * NLATENT);
+
+            // Truncate pred
+            pred = min(MAXVAL, pred);
+            pred = max(MINVAL, pred);
+
+            double err = (pred - user_movie_ratings[i].rating);
+
+            for (int j = 0; j < NLATENT; ++j)
+                u_mat[(user_id-1) * NLATENT + j] +=
+                        -GAMMA * (err* v_mat[(movie_id-1) * NLATENT + j] +
+                                LAMBDA * u_mat[(user_id-1) * NLATENT + j]);
+
+            for (int j = 0; j < NLATENT; ++j)
+                v_mat[(movie_id-1) * NLATENT + j] +=
+                        -GAMMA * (err* u_mat[(user_id-1) * NLATENT + j] +
+                                LAMBDA * v_mat[(movie_id-1) * NLATENT + j]);
+        }
     }
 }
