@@ -47,7 +47,11 @@ typedef struct {
 unsigned int num_user_movie_rating = 99072112;
 unsigned int num_users = 480189;
 unsigned int num_movies = 17770;
-const unsigned int NLATENT = 200;
+#ifdef LATENT
+const unsigned int NLATENT = LATENT;
+#else
+const unsigned int NLATENT = 20;
+#endif
 const double MAXVAL = 1e+100;
 const double MINVAL = -1e+100;
 const double LAMBDA = 0.001;
@@ -85,8 +89,10 @@ int main(int argc, char** argv) {
     }
 
 #ifdef BLAS
-  printf("Use blas.\n");
+    printf("Use blas.\n");
 #endif
+
+    printf("NLATENT=%d\n", NLATENT);
 
     FILE *fp;
     fp = fopen(argv[1], "ro");
