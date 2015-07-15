@@ -1,7 +1,11 @@
 #!/bin/bash
 set -e
 
-source $(dirname $0)/../scripts/common.sh
+if [ -d /vagrant ]; then
+  source /vagrant/scripts/common.sh
+elif
+  source $(dirname $0)/../scripts/common.sh
+fi
 
 function buildProtobuf {
   log "build protobuf"

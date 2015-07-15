@@ -1,5 +1,9 @@
 LOCAL_PROJECT=$(readlink -f `dirname $0`)/..
-PROJECT=/vagrant
+if [ -d /vagrant ]; then
+  PROJECT=/vagrant
+elif
+  PROJECT=$LOCAL_PROJECT
+fi
 RESOURCES=$PROJECT/resources
 
 INSTALL=/usr/local
@@ -19,7 +23,8 @@ HADOOP_CONF=$HADOOP_PREFIX/etc/hadoop
 
 SPARK_GIT=$PROJECT/third_party/spark
 SPARK_VER=1.4
-SPARK_ARCHIVE=spark-${SPARK_VER}.0-SNAPSHOT-bin-hadoop-${HADOOP_VER_MAJOR}.tgz
+SPARK_VER_MINOR=2
+SPARK_ARCHIVE=spark-${SPARK_VER}.$SPARK_VER_MINOR-SNAPSHOT-bin-hadoop-${HADOOP_VER_MAJOR}.tgz
 SPARK_PREFIX=$INSTALL/spark
 SPARK_CONF=$SPARK_PREFIX/conf
 

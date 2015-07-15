@@ -1,7 +1,11 @@
 #!/bin/bash
 set -e
 
-source /vagrant/scripts/common.sh
+if [ -d /vagrant ]; then
+  source /vagrant/scripts/common.sh
+elif
+  source $(dirname $0)/../scripts/common.sh
+fi
 
 SLAVE_START_=0
 SLAVE_END_=0

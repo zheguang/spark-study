@@ -11,10 +11,12 @@ lazy val root = (project in file("."))
     scalaVersion := "2.11.7",
     scalaHome := Some(file("/usr/local/scala")))
 
+val sparkVer = "1.4"
+
 libraryDependencies ++= Seq(
-  "edu.brown.cs.sam" % "spark" % "1.4.0" % "provided",
-  "edu.brown.cs.sam" % "spark-assembly" % "1.4.0" % "provided",
-  "edu.brown.cs.sam" % "spark-examples" % "1.4.0" % "provided",
+  "edu.brown.cs.sam" % "spark" % sparkVer % "provided",
+  "edu.brown.cs.sam" % "spark-assembly" % sparkVer % "provided",
+  "edu.brown.cs.sam" % "spark-examples" % sparkVer % "provided",
   "org.scalanlp" %% "breeze" % "0.11.2",
   // native libraries are not included by default. add this if you want them (as of 0.7)
   // native libraries greatly improve performance, but increase jar sizes.

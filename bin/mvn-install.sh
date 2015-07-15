@@ -2,23 +2,25 @@
 
 set -e
 
+source $(dirname $0)/../scripts/common.sh
+
 resources=$(dirname $0)/../resources
 
-
-tar xzf $resources/spark-1.4.0-SNAPSHOT-bin-hadoop-2.4.tgz -C /tmp/
+assertExists $resources/$SPARK_ARCHIVE
+tar xzf $resources/$SPARK_ARCHIVE -C /tmp/
 
 declare -A artIds
 
 # space sensitive
 artIds=(
-  ["spark-1.4.0-SNAPSHOT-yarn-shuffle.jar"]="spark"
-  ["spark-assembly-1.4.0-SNAPSHOT-hadoop2.4.0.jar"]="spark-assembly"
-  ["spark-examples-1.4.0-SNAPSHOT-hadoop2.4.0.jar"]="spark-examples"
+  ["spark-${SPARK_VER}.${SPARK_VER_MINOR}-SNAPSHOT-yarn-shuffle.jar"]="spark"
+  ["spark-assembly-${SPARK_VER}.${SPARK_VER_MINOR}-SNAPSHOT-hadoop2.4.0.jar"]="spark-assembly"
+  ["spark-examples-${SPARK_VER}.${SPARK_VER_MINOR}-SNAPSHOT-hadoop2.4.0.jar"]="spark-examples"
 )
 
-cd /tmp/spark-1.4.0-SNAPSHOT-bin-hadoop-2.4/lib/
+cd /tmp/${SPARK_ARCHIVE%.*}/lib/
 
 for jarName in "${!artIds[@]}"; do
-  artifact="-Dfile=$jarName -DgroupId=edu.brown.cs.sam -DartifactId=${artIds["$jarName"]} -Dversion=1.4.0 -Dpackaging=jar"
+  artifact="-Dfile=$jarName -DgroupId=edu.brown.cs.sam -DartifactId=${artIds["$jarName"]} -Dversion=${SPARK_VER} -Dpackaging=jar"
   mvn org.apache.maven.plugins:maven-install-plugin:2.5.2:install-file $artifact
 done

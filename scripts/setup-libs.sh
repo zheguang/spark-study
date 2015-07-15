@@ -1,7 +1,11 @@
 #!/bin/bash
 set -e
 
-source /vagrant/scripts/common.sh
+if [ -d /vagrant ]; then
+  source /vagrant/scripts/common.sh
+elif
+  source $(dirname $0)/../scripts/common.sh
+fi
 
 function initThirdParty {
   log "init third-party submodules"
