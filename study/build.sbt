@@ -1,10 +1,20 @@
-lazy val root = (project in file(".")).settings(
-  name := "study",
-  scalaVersion := "2.11.7",
-  scalaHome := Some(file("/usr/local/scala"))
+
+lazy val commonSettings = Seq(
+  // Pick the specified scala version
+  ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 )
 
+lazy val root = (project in file("."))
+  .settings(commonSettings: _*)
+  .settings(
+    name := "study",
+    scalaVersion := "2.11.7",
+    scalaHome := Some(file("/usr/local/scala")))
+
 libraryDependencies ++= Seq(
+  "edu.brown.cs.sam" % "spark" % "1.4.0" % "provided",
+  "edu.brown.cs.sam" % "spark-assembly" % "1.4.0" % "provided",
+  "edu.brown.cs.sam" % "spark-examples" % "1.4.0" % "provided",
   "org.scalanlp" %% "breeze" % "0.11.2",
   // native libraries are not included by default. add this if you want them (as of 0.7)
   // native libraries greatly improve performance, but increase jar sizes.
@@ -19,7 +29,10 @@ libraryDependencies ++= Seq(
 )
 
 resolvers ++= Seq(
+  "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository",
   // if you want to use snapshot builds (currently 0.12-SNAPSHOT), use this.
   "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
   "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/"
 )
+
+scalacOptions ++= Seq("-Xmax-classfile-name","240")

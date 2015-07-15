@@ -1,5 +1,7 @@
 package com.intel.sparkstudy.matrix;
 
+import com.github.fommil.netlib.BLAS;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -36,21 +38,57 @@ public class JavaSgdSingleNodeTiles {
         }
     }
 
+    static abstract class Algebran {
+        abstract double dotP(double[] u_mat, int u_start, double[] v_mat, int v_start);
+
+        static Algebran of(String mode) {
+            switch (mode.toLowerCase()) {
+                case "java":
+                    return new JavaAlgebran();
+                case "blas":
+                    return new BlasAlgebran();
+                default:
+                    throw new SparkStudyError("Unsupported dot product mode: " + mode);
+            }
+        }
+    }
+
+    static class JavaAlgebran extends Algebran {
+        @Override
+        double dotP(double[] u_mat, int u_start, double[] v_mat, int v_start) {
+            double result = 0;
+            for (int i = 0; i < NLATENT; i++) {
+                result += u_mat[u_start + i] * v_mat[v_start + i];
+            }
+            return result;
+        }
+    }
+
+    static class BlasAlgebran extends Algebran {
+        @Override
+        double dotP(double[] u_mat, int u_start, double[] v_mat, int v_start) {
+            return BLAS.getInstance().ddot(NLATENT, u_mat, u_start, 1, v_mat, v_start, 1);
+        }
+    }
+
     public static void main(String[] args) {
-        if (args.length < 5) {
-            System.out.println("Syntax: JavaSgdSingleNodeTiles <filename> <nusers> <nmovies> <nratings> <nthreads>");
+        if (args.length < 6) {
+            System.out.println("Syntax: JavaSgdSingleNodeTiles [java|blas] <filename> <nusers> <nmovies> <nratings> <nthreads>");
             System.exit(123);
         }
-        final String filename = args[0];
-        final int num_users = parseInt(args[1]);
-        final int num_movies = parseInt(args[2]);
-        final int num_user_movie_ratings = parseInt(args[3]);
+        final String algebra_mode = args[0];
+        final Algebran algebran = Algebran.of(algebra_mode);
+        final String filename = args[1];
+        final int num_users = parseInt(args[2]);
+        final int num_movies = parseInt(args[3]);
+        final int num_user_movie_ratings = parseInt(args[4]);
         //final int num_user_movie_ratings = (int) (num_users * num_movies * 0.10);  // 10% filled ratings matrix.
-        final int num_procs = parseInt(args[4]);
+        final int num_procs = parseInt(args[5]);
         final int num_nodes = 2;
         final Edge[] user_movie_ratings = new Edge[num_user_movie_ratings];
         final Random randGen = new Random(4562727);
 
+        System.out.println("algebra_mode=" + algebra_mode);
         System.out.println("filename=" + filename);
         System.out.println("num_users=" + num_users);
         System.out.println("num_movies=" + num_movies);
@@ -113,7 +151,7 @@ public class JavaSgdSingleNodeTiles {
         double GAMMA = 0.001;
         for (int itr = 0; itr < max_iter; itr++)
         {
-            double tbegin = System.currentTimeMillis();
+            double tbegin = System.nanoTime();
             for (int l = 0; l < num_nodes; ++l)
             {
                 int row = 0;
@@ -181,7 +219,7 @@ public class JavaSgdSingleNodeTiles {
                                 int user_id = user_movie_ratings[i].user;
                                 int movie_id = user_movie_ratings[i].movie;
 
-                                double pred = dotP(U_mat, (user_id-1) * NLATENT,
+                                double pred = algebran.dotP(U_mat, (user_id-1) * NLATENT,
                                 V_mat, (movie_id-1) * NLATENT);
 
                                 // Truncate pred
@@ -205,7 +243,7 @@ public class JavaSgdSingleNodeTiles {
                 }
             }
             GAMMA *= STEP_DEC;
-            double tend = System.currentTimeMillis();
+            double tend = System.nanoTime();
             System.out.printf("Time in iteration %d of sgd %f (ms) \n", itr, ((tend - tbegin)/cpu_freq)* 1000);
         }
 
@@ -215,7 +253,7 @@ public class JavaSgdSingleNodeTiles {
             int user_id = user_movie_ratings[i].user;
             int movie_id = user_movie_ratings[i].movie;
 
-            double pred = dotP(U_mat, (user_id - 1) * NLATENT, V_mat, (movie_id - 1) * NLATENT);
+            double pred = algebran.dotP(U_mat, (user_id - 1) * NLATENT, V_mat, (movie_id - 1) * NLATENT);
             pred = min(MAXVAL, pred);
             pred = max(MINVAL, pred);
 
@@ -224,13 +262,5 @@ public class JavaSgdSingleNodeTiles {
         }
         train_err = sqrt(train_err / num_user_movie_ratings);
         System.out.printf("Training rmse %f\n", train_err);
-    }
-
-    private static double dotP(double[] u_mat, int u_start, double[] v_mat, int v_start) {
-        double result = 0;
-        for (int i = 0; i < NLATENT; i++) {
-            result += u_mat[u_start + i] * v_mat[v_start + i];
-        }
-        return result;
     }
 }
