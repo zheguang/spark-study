@@ -1,7 +1,7 @@
 LOCAL_PROJECT=$(readlink -f `dirname $0`)/..
 if [ -d /vagrant ]; then
   PROJECT=/vagrant
-elif
+else
   PROJECT=$LOCAL_PROJECT
 fi
 RESOURCES=$PROJECT/resources

@@ -3,7 +3,7 @@ set -e
 
 if [ -d /vagrant ]; then
   source /vagrant/scripts/common.sh
-elif
+else
   source $(dirname $0)/../scripts/common.sh
 fi
 
