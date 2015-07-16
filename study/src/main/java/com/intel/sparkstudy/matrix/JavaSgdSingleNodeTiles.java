@@ -41,7 +41,7 @@ public class JavaSgdSingleNodeTiles {
     }
 
     static abstract class Algebran {
-        abstract double dotP(double[] u_mat, int u_start, double[] v_mat, int v_start);
+        abstract double dotP(int vectorLen, double[] u_mat, int u_start, double[] v_mat, int v_start);
 
         static Algebran of(String mode) {
             switch (mode.toLowerCase()) {
@@ -57,9 +57,9 @@ public class JavaSgdSingleNodeTiles {
 
     static class JavaAlgebran extends Algebran {
         @Override
-        double dotP(double[] u_mat, int u_start, double[] v_mat, int v_start) {
+        double dotP(int vectorLen, double[] u_mat, int u_start, double[] v_mat, int v_start) {
             double result = 0;
-            for (int i = 0; i < NLATENT; i++) {
+            for (int i = 0; i < vectorLen; i++) {
                 result += u_mat[u_start + i] * v_mat[v_start + i];
             }
             return result;
@@ -68,30 +68,32 @@ public class JavaSgdSingleNodeTiles {
 
     static class BlasAlgebran extends Algebran {
         @Override
-        double dotP(double[] u_mat, int u_start, double[] v_mat, int v_start) {
-            return BLAS.getInstance().ddot(NLATENT, u_mat, u_start, 1, v_mat, v_start, 1);
+        double dotP(int vectorLen, double[] u_mat, int u_start, double[] v_mat, int v_start) {
+            return BLAS.getInstance().ddot(vectorLen, u_mat, u_start, 1, v_mat, v_start, 1);
         }
     }
 
     public static void main(String[] args) {
         if (args.length < 6) {
-            System.out.println("Syntax: JavaSgdSingleNodeTiles [java|blas] <filename> <nusers> <nmovies> <nratings> <nthreads>");
+            System.err.println("Syntax: JavaSgdSingleNodeTiles [java|blas] <latent> <filename> <nusers> <nmovies> <nratings> <nthreads>");
             System.exit(123);
         }
         final String algebra_mode = args[0];
         final Algebran algebran = Algebran.of(algebra_mode);
-        final String filename = args[1];
-        final int num_users = parseInt(args[2]);
-        final int num_movies = parseInt(args[3]);
-        final int num_user_movie_ratings = parseInt(args[4]);
+        final int NLATENT = parseInt(args[1]);
+        final String filename = args[2];
+        final int num_users = parseInt(args[3]);
+        final int num_movies = parseInt(args[4]);
+        final int num_user_movie_ratings = parseInt(args[5]);
         //final int num_user_movie_ratings = (int) (num_users * num_movies * 0.10);  // 10% filled ratings matrix.
-        final int num_procs = parseInt(args[5]);
+        final int num_procs = parseInt(args[6]);
         final int num_nodes = 2;
         final Edge[] user_movie_ratings = new Edge[num_user_movie_ratings];
         final Random randGen = new Random(4562727);
         final ExecutorService procsPool = Executors.newFixedThreadPool(num_procs);
 
         System.out.println("algebra_mode=" + algebra_mode);
+        System.out.println("nlatent=" + NLATENT);
         System.out.println("filename=" + filename);
         System.out.println("num_users=" + num_users);
         System.out.println("num_movies=" + num_movies);
@@ -212,7 +214,8 @@ public class JavaSgdSingleNodeTiles {
                                                 rows[K] * num_procs * num_nodes * num_procs +
                                                         cols[K] * num_procs +
                                                         rowsp[PIDX2] * (num_procs * num_nodes) +
-                                                        colsp[PIDX2]), user_movie_ratings, U_mat, V_mat, Gamma);
+                                                        colsp[PIDX2]),
+                                        user_movie_ratings, U_mat, V_mat, Gamma, NLATENT);
                                 return true;
                             });
                         }
@@ -242,7 +245,7 @@ public class JavaSgdSingleNodeTiles {
             int user_id = user_movie_ratings[i].user;
             int movie_id = user_movie_ratings[i].movie;
 
-            double pred = algebran.dotP(U_mat, (user_id - 1) * NLATENT, V_mat, (movie_id - 1) * NLATENT);
+            double pred = algebran.dotP(NLATENT, U_mat, (user_id - 1) * NLATENT, V_mat, (movie_id - 1) * NLATENT);
             pred = min(MAXVAL, pred);
             pred = max(MINVAL, pred);
 
@@ -256,7 +259,7 @@ public class JavaSgdSingleNodeTiles {
         assert procsPool.isTerminated();
     }
 
-    private static void processOneTile(Algebran algebran, ArrayList<Integer> tile, Edge[] user_movie_ratings, double[] u_mat, double[] v_mat, double GAMMA) {
+    private static void processOneTile(Algebran algebran, ArrayList<Integer> tile, Edge[] user_movie_ratings, double[] u_mat, double[] v_mat, double GAMMA, int NLATENT) {
         ArrayList<Integer> v =
                 tile;
 
@@ -274,7 +277,7 @@ public class JavaSgdSingleNodeTiles {
             int user_id = user_movie_ratings[i].user;
             int movie_id = user_movie_ratings[i].movie;
 
-            double pred = algebran.dotP(u_mat, (user_id-1) * NLATENT,
+            double pred = algebran.dotP(NLATENT, u_mat, (user_id-1) * NLATENT,
                     v_mat, (movie_id-1) * NLATENT);
 
             // Truncate pred
