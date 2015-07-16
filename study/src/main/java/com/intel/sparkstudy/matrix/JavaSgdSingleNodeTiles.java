@@ -101,6 +101,7 @@ public class JavaSgdSingleNodeTiles {
         System.out.println("num_procs=" + num_procs);
         System.out.println("num_nodes=" + num_nodes);
 
+        double tbegin = System.nanoTime();
         Scanner scanner = null;
         try {
             scanner = new Scanner(new BufferedReader(new FileReader(filename)));
@@ -117,7 +118,10 @@ public class JavaSgdSingleNodeTiles {
                 scanner.close();
             }
         }
+        double tend = System.nanoTime();
+        System.out.printf("Time in data read: %f (ms)\n", (tend - tbegin) / cpu_freq * 1000);
 
+        tbegin = System.nanoTime();
         double[] U_mat = new double[NLATENT * num_users];
         double[] V_mat = new double[NLATENT * num_movies];
         for (int i = 0; i < num_users; i++) {
@@ -130,6 +134,9 @@ public class JavaSgdSingleNodeTiles {
                 V_mat[i * NLATENT + j] = (-1) + 2 * randGen.nextDouble();
             }
         }
+        tend = System.nanoTime();
+        System.out.printf("Time in U-V init: %f (ms)\n", (tend - tbegin) / cpu_freq * 1000);
+
 
         final int numTilesOneDim = num_nodes * num_procs;
         ArrayList<ArrayList<Integer>> tilesMat = new ArrayList<>(numTilesOneDim * numTilesOneDim);
@@ -156,7 +163,7 @@ public class JavaSgdSingleNodeTiles {
         double GAMMA = 0.001;
         for (int itr = 0; itr < max_iter; itr++)
         {
-            double tbegin = System.nanoTime();
+            tbegin = System.nanoTime();
             for (int l = 0; l < num_nodes; ++l)
             {
                 int row = 0;
@@ -235,7 +242,7 @@ public class JavaSgdSingleNodeTiles {
                 }
             }
             GAMMA *= STEP_DEC;
-            double tend = System.nanoTime();
+            tend = System.nanoTime();
             System.out.printf("Time in iteration %d of sgd %f (ms) \n", itr, ((tend - tbegin)/cpu_freq)* 1000);
         }
 

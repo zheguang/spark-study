@@ -43,12 +43,12 @@ function do_bench() {
 algebra_modes=("blas" "java")
 
 check_mkl
-#setup
+setup
 compile
 
 echo "[INFO] start benchmark"
 for mode in ${algebra_modes[@]}; do
   do_bench 20 1> $my_bench/result/JavaSgdSingleNodeTiles_l20_${mode}.result
-  do_bench 200 1> $my_bench/result/JavaSgdSingleNodeTiles_l200_${mode}.result
+  #do_bench 200 1> $my_bench/result/JavaSgdSingleNodeTiles_l200_${mode}.result
 done
 echo "[INFO] end benchmark"
