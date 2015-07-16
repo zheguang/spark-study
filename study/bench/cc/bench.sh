@@ -2,6 +2,8 @@
 set -e
 
 root=$(readlink -f `dirname $0`)/../..
+my_bench=$root/bench/cc
+cd $my_bench
 
 NUM_ITERS=1
 
@@ -20,21 +22,28 @@ nthreads=$5
 function setup() {
   echo "[INFO] set up"
   rm -rf build/ && mkdir build
-  rm -rf result/ && mkdir result
+  rm -rif result/ && mkdir result
 }
 
 function compile() {
-  echo "[INFO] compile"
+  mode_=$1
+  latent_=$2
+  echo "[INFO] compile for mode=$mode_ latent=$latent_"
   src=$root/src/main/cc
-  icpc -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel.out
-  icpc -DBLAS -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_blas.out -lmkl_rt
-
-  icpc -DLATENT=200 -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_l200.out
-  icpc -DLATENT=200 -DBLAS -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_l200_blas.out -lmkl_rt
+  #icpc -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel.out
+  #icpc -DBLAS -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_blas.out -lmkl_rt
+  #icpc -DLATENT=$latent_ -D$mode -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_l${latent_}_${mode}.out
+  icpc -DLATENT=$latent_ -D$mode_ -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_l${latent_}_${mode_}.out -lmkl_rt
 }
 
 function do_bench() {
-  exe_path_=$1
+  mode_=$1
+  latent_=$2
+  exe_path_=build/sgd_single_intel_l${latent_}_${mode_}.out
+  if [ ! -e exe_path_ ]; then
+    >&2 echo "[error] $exe_path_ does not exist."
+    exit 1
+  fi
   >&2 echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
   echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
   for i in $(seq 1 $NUM_ITERS); do
@@ -46,7 +55,9 @@ function do_bench() {
 }
 
 function do_bench_s20() {
-  exe_path_=$1
+  mode_=$1
+  latent_=$2
+  exe_path_=build/sgd_single_intel_l${latent_}_${mode_}.out
   datafile=/ext/research/graphmat/datasets/Rating_S20.train
   nusers=996994
   nmovies=20972
@@ -62,14 +73,27 @@ function do_bench_s20() {
   done
 }
 
-exe_names=("sgd_single_intel" "sgd_single_intel_blas" "sgd_single_intel_l200" "sgd_single_intel_l200_blas")
+modes=("CPP" "BLAS")
+#modes=("BLAS")
+#latents=("20" "200" "2000")
+latents=("20000")
 
 setup
-compile
+#compile
+echo "[info] start compile"
+for l in "${latents[@]}"; do
+  for m in "${modes[@]}"; do
+    compile $m $l
+  done
+done
+echo "[info] end compile"
+
 echo "[INFO] start benchmark"
 #do_bench_s20 build/sgd_single_intel.out 1> result/sgd_single_intel.result
 #do_bench_s20 build/sgd_single_intel_blas.out 1> result/sgd_single_intel_blas.result
-for exe_name in "${exe_names[@]}"; do
-  do_bench_s20 build/${exe_name}.out 1> result/${exe_name}.result
+for l in "${latents[@]}"; do
+  for m in "${modes[@]}"; do
+    do_bench_s20 $m $l build/${exe_name}.out 1> result/sgd_single_intel_l${latent_}_${mode_}.result
+  done
 done
 echo "[INFO] done all benchmark."
