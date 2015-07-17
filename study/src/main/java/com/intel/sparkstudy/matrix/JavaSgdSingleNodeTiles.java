@@ -162,11 +162,6 @@ public class JavaSgdSingleNodeTiles {
         double GAMMA = 0.001;
         for (int itr = 0; itr < max_iter; itr++)
         {
-            double[] dotp_times_per_proc = new double[num_procs];
-            for (int i = 0; i < num_procs; i++) {
-                dotp_times_per_proc[i] = 0;
-            }
-
             tbegin = System.currentTimeMillis();
             for (int l = 0; l < num_nodes; ++l)
             {
@@ -226,8 +221,7 @@ public class JavaSgdSingleNodeTiles {
                                                         cols[K] * num_procs +
                                                         rowsp[PIDX2] * (num_procs * num_nodes) +
                                                         colsp[PIDX2]),
-                                        user_movie_ratings, U_mat, V_mat, Gamma, NLATENT,
-                                        PIDX2, dotp_times_per_proc);
+                                        user_movie_ratings, U_mat, V_mat, Gamma, NLATENT);
                                 return true;
                             });
                         }
@@ -248,12 +242,7 @@ public class JavaSgdSingleNodeTiles {
             }
             GAMMA *= STEP_DEC;
             tend = System.currentTimeMillis();
-            double dotp_time_per_itr = 0;
-            for (int i = 0; i < num_procs; i++) {
-                dotp_time_per_itr += dotp_times_per_proc[i];
-            }
-            dotp_time_per_itr /= num_procs;
-            System.out.printf("Time in iteration %d of sgd %f (ms) dotp_per_proc %f (ms)\n", itr, tend - tbegin, dotp_time_per_itr);
+            System.out.printf("Time in iteration %d of sgd %f (ms)\n", itr, tend - tbegin);
         }
 
         // Calculate training error
@@ -276,7 +265,7 @@ public class JavaSgdSingleNodeTiles {
         assert procsPool.isTerminated();
     }
 
-    private static void processOneTile(Algebran algebran, ArrayList<Integer> tile, Edge[] user_movie_ratings, double[] u_mat, double[] v_mat, double GAMMA, int NLATENT, int procIndex, double[] dotp_times_per_proc) {
+    private static void processOneTile(Algebran algebran, ArrayList<Integer> tile, Edge[] user_movie_ratings, double[] u_mat, double[] v_mat, double GAMMA, int NLATENT) {
         ArrayList<Integer> v =
                 tile;
 
@@ -294,11 +283,8 @@ public class JavaSgdSingleNodeTiles {
             int user_id = user_movie_ratings[i].user;
             int movie_id = user_movie_ratings[i].movie;
 
-            double tbegin_dotp = System.currentTimeMillis();
             double pred = algebran.dotP(NLATENT, u_mat, (user_id-1) * NLATENT,
                     v_mat, (movie_id-1) * NLATENT);
-            double tend_dotp = System.currentTimeMillis();
-            dotp_times_per_proc[procIndex] += tend_dotp - tbegin_dotp;
 
             // Truncate pred
             pred = min(MAXVAL, pred);
