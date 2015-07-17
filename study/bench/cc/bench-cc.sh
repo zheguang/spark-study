@@ -5,8 +5,6 @@ root=$(readlink -f `dirname $0`)/../..
 my_bench=$root/bench/cc
 cd $my_bench
 
-NUM_ITERS=1
-
 source /opt/intel/bin/compilervars.sh intel64
 #export LD_LIBRARY_PATH=/opt/intel/composer_xe_2015.3.187/compiler/lib/intel64:/opt/intel/composer_xe_2015.3.187/mpirt/lib/intel64:$LD_LIBRARY_PATH
 #export LIBRARY_PATH=/opt/intel/composer_xe_2015.3.187/compiler/lib/intel64:/opt/intel/composer_xe_2015.3.187/mpirt/lib/intel64:$LIBRARY_PATH
@@ -21,8 +19,9 @@ nthreads=$5
 
 function setup() {
   echo "[INFO] set up"
+  rm -rf test/ && mkdir test
   rm -rf build/ && mkdir build
-  rm -rif result/ && mkdir result
+  rm -ri result/ && mkdir result
 }
 
 function compile() {
@@ -36,25 +35,21 @@ function compile() {
   icpc -DLATENT=$latent_ -D$mode_ -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_l${latent_}_${mode_}.out -lmkl_rt
 }
 
-function do_bench() {
+function test_bench() {
   mode_=$1
   latent_=$2
   exe_path_=build/sgd_single_intel_l${latent_}_${mode_}.out
-  if [ ! -e exe_path_ ]; then
-    >&2 echo "[error] $exe_path_ does not exist."
-    exit 1
-  fi
+  datafile=$root/src/main/cc/ratings_u10_v9.dat
+  nusers=1024
+  nmovies=512
+  nratings=524288
+  nthreads=4
   >&2 echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
   echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
-  for i in $(seq 1 $NUM_ITERS); do
-    echo "Iteration: $i"
-    #$exe_path_ ratings_u10_v9.dat $((1 << 10)) $((1 << 9)) $((1 << 19)) 4
-    $exe_path_ $datafile $nusers $nmovies $nratings $nthreads
-    echo -e "\n"
-  done
+  $exe_path_ $datafile $nusers $nmovies $nratings $nthreads
 }
 
-function do_bench_s20() {
+function do_bench() {
   mode_=$1
   latent_=$2
   exe_path_=build/sgd_single_intel_l${latent_}_${mode_}.out
@@ -65,18 +60,11 @@ function do_bench_s20() {
   nthreads=8
   >&2 echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
   echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
-  for i in $(seq 1 $NUM_ITERS); do
-    echo "Iteration: $i"
-    $exe_path_ $datafile $nusers $nmovies $nratings $nthreads
-    #$exe_path_ /ext/research/graphmat/datasets/Rating_S20.train 996994 20972 248944185 8
-    echo -e "\n"
-  done
+  $exe_path_ $datafile $nusers $nmovies $nratings $nthreads
 }
 
 modes=("CPP" "BLAS")
-#modes=("BLAS")
-#latents=("20" "200" "2000")
-latents=("20000")
+latents=("20" "200" "2000")
 
 setup
 #compile
@@ -93,7 +81,8 @@ echo "[INFO] start benchmark"
 #do_bench_s20 build/sgd_single_intel_blas.out 1> result/sgd_single_intel_blas.result
 for l in "${latents[@]}"; do
   for m in "${modes[@]}"; do
-    do_bench_s20 $m $l build/${exe_name}.out 1> result/sgd_single_intel_l${latent_}_${mode_}.result
+    do_bench $m $l 1> result/sgd_single_intel_l${l}_${m}.result
+    #test_bench $m $l 1> test/sgd_single_intel_l${l}_${m}.result
   done
 done
 echo "[INFO] done all benchmark."
