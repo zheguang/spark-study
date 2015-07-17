@@ -40,6 +40,11 @@ function test_bench() {
   >&2 echo "$exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
   echo "$exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
   java -cp $fatJar $exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads 
+
+  exe_path_dotptime_=com.intel.sparkstudy.matrix.JavaSgdSingleNodeTilesDotPTime
+  >&2 echo "$exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
+  echo "$exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
+  java -cp $fatJar $exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads 
 }
 
 function do_bench() { 
@@ -56,10 +61,15 @@ function do_bench() {
   >&2 echo "$exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
   echo "$exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
   java -cp $fatJar $exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads 
+
+  exe_path_dotptime_=com.intel.sparkstudy.matrix.JavaSgdSingleNodeTilesDotPTime
+  >&2 echo "$exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
+  echo "$exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
+  java -cp $fatJar $exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads 
 }
 
 algebra_modes=("blas" "java")
-latents=("20" "200" "2000")
+latents=("20" "200")
 
 check_mkl
 setup
@@ -68,8 +78,8 @@ compile
 echo "[INFO] start benchmark"
 for m in ${algebra_modes[@]}; do
   for l in ${latents[@]}; do
-    do_bench $l $m 1> $my_bench/result/JavaSgdSingleNodeTiles_l${l}_${m}.result
-    #test_bench $l $m 1> $my_bench/test/JavaSgdSingleNodeTiles_l${l}_${m}.result
+    #do_bench $l $m 1> $my_bench/result/JavaSgdSingleNodeTiles_l${l}_${m}.result
+    test_bench $l $m 1> $my_bench/test/JavaSgdSingleNodeTiles_l${l}_${m}.result
   done
 done
 echo "[INFO] end benchmark"
