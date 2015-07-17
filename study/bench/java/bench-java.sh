@@ -17,7 +17,11 @@ function check_mkl() {
 
 function setup() {
   echo "[INFO] set up"
-  (cd $my_bench && rm -ri result/ && mkdir result)
+  if [ -d $my_bench/result ]; then
+    (cd $my_bench && rm -ri result/ && mkdir result)
+  else
+    (cd $my_bench && mkdir result)
+  fi
   (cd $my_bench && rm -rf test/ && mkdir test)
 }
 

@@ -273,10 +273,12 @@ int main(int argc, char** argv) {
     // exit(1);
     for (size_t itr = 0; itr < max_iter; itr++)
     {
+#ifdef DOTPTIME
       double dotp_times_per_proc[num_procs];
       for (int i = 0; i < num_procs; i++) {
         dotp_times_per_proc[i] = 0;
       }
+#endif
 #ifdef __GNUC__
     tbegin = rdtsc();
 #else
@@ -366,20 +368,23 @@ int main(int argc, char** argv) {
                         m_tn[pidx2].insert(movie_id);
 #endif
 
-
+#ifdef DOTPTIME
 #ifdef __GNUC__
                         double tbegin_dotp = rdtsc();
 #else
                         double tbegin_dotp = __rdtsc();
 #endif
+#endif
                         double pred = dotP(&(U_mat[(user_id-1) * NLATENT]), 
                                            &(V_mat[(movie_id-1) * NLATENT]));
+#ifdef DOTPTIME
 #ifdef __GNUC__
                         double tend_dotp = rdtsc();
 #else
                         double tend_dotp = __rdtsc();
 #endif
                         dotp_times_per_proc[pidx2] += tend_dotp - tbegin_dotp;
+#endif
   
             // Truncate pred
                         pred = std::min(MAXVAL, pred);
@@ -442,12 +447,16 @@ int main(int argc, char** argv) {
 #else
     tend = __rdtsc();
 #endif
+#ifdef DOTPTIME
     double dotp_time_per_itr = 0;
     for (int i = 0; i < num_procs; i++) {
       dotp_time_per_itr += dotp_times_per_proc[i];
     }
     dotp_time_per_itr /= num_procs;
     printf("Time in iteration %ld of sgd %f (ms) dotP %f (ms)\n", itr, ((tend - tbegin)/cpu_freq)* 1000, (dotp_time_per_itr) / cpu_freq * 1000);
+#else
+    printf("Time in iteration %ld of sgd %f (ms)\n", itr, ((tend - tbegin)/cpu_freq)* 1000);
+#endif
     }
 
 
@@ -467,8 +476,9 @@ int main(int argc, char** argv) {
         pred = std::min(MAXVAL, pred);
         pred = std::max(MINVAL, pred);
 
-        const double rmse = (pred - user_movie_ratings[i].rating)*
-                            (pred - user_movie_ratings[i].rating);
+        const float rmse = abs(
+                            (pred - user_movie_ratings[i].rating)*
+                            (pred - user_movie_ratings[i].rating));
   
         train_err += rmse;
     }

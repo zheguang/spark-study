@@ -21,7 +21,11 @@ function setup() {
   echo "[INFO] set up"
   rm -rf test/ && mkdir test
   rm -rf build/ && mkdir build
-  rm -ri result/ && mkdir result
+  if [ -d result ]; then
+    rm -ri result/ && mkdir result
+  else
+    mkdir result
+  fi
 }
 
 function compile() {
@@ -33,6 +37,7 @@ function compile() {
   #icpc -DBLAS -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_blas.out -lmkl_rt
   #icpc -DLATENT=$latent_ -D$mode -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_l${latent_}_${mode}.out
   icpc -DLATENT=$latent_ -D$mode_ -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_l${latent_}_${mode_}.out -lmkl_rt
+  icpc -DLATENT=$latent_ -D$mode_ -DDOTPTIME -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_l${latent_}_${mode_}_dotptime.out -lmkl_rt
 }
 
 function test_bench() {
@@ -47,6 +52,9 @@ function test_bench() {
   >&2 echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
   echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
   $exe_path_ $datafile $nusers $nmovies $nratings $nthreads
+
+  exe_dotptime_=build/sgd_single_intel_l${latent_}_${mode_}_dotptime.out
+  $exe_dotptime_ $datafile $nusers $nmovies $nratings $nthreads
 }
 
 function do_bench() {
@@ -61,6 +69,9 @@ function do_bench() {
   >&2 echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
   echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
   $exe_path_ $datafile $nusers $nmovies $nratings $nthreads
+
+  exe_dotptime_=build/sgd_single_intel_l${latent_}_${mode_}_dotptime.out
+  $exe_dotptime_ $datafile $nusers $nmovies $nratings $nthreads
 }
 
 modes=("CPP" "BLAS")
