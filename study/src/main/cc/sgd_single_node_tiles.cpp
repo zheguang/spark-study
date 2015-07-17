@@ -88,12 +88,6 @@ int main(int argc, char** argv) {
         exit(123);
     }
 
-#ifdef BLAS
-    printf("Use blas.\n");
-#endif
-
-    printf("NLATENT=%d\n", NLATENT);
-
     FILE *fp;
     fp = fopen(argv[1], "ro");
 
@@ -101,6 +95,19 @@ int main(int argc, char** argv) {
     num_movies = atoi(argv[3]);
     num_user_movie_rating = atoi(argv[4]);
     num_procs = atoi(argv[5]);
+
+#ifdef BLAS
+    printf("algebra_mode=BLAS\n");
+#else
+    printf("algebra_mode=CPP\n");
+#endif
+    printf("nlatent=%d\n", NLATENT);
+    printf("filename=%s\n", argv[1]);
+    printf("num_users=%d\n", num_users);
+    printf("num_movies=%d\n", num_movies);
+    printf("num_user_movie_rating=%d\n", num_user_movie_rating);
+    printf("num_procs=%d\n", num_procs);
+    printf("num_nodes=%d\n", num_nodes);
 
     edge *user_movie_ratings;
     user_movie_ratings = (edge *) malloc(num_user_movie_rating * sizeof(edge));
@@ -266,6 +273,10 @@ int main(int argc, char** argv) {
     // exit(1);
     for (size_t itr = 0; itr < max_iter; itr++)
     {
+      double dotp_times_per_proc[num_procs];
+      for (int i = 0; i < num_procs; i++) {
+        dotp_times_per_proc[i] = 0;
+      }
 #ifdef __GNUC__
     tbegin = rdtsc();
 #else
@@ -356,8 +367,19 @@ int main(int argc, char** argv) {
 #endif
 
 
+#ifdef __GNUC__
+                        double tbegin_dotp = rdtsc();
+#else
+                        double tbegin_dotp = __rdtsc();
+#endif
                         double pred = dotP(&(U_mat[(user_id-1) * NLATENT]), 
                                            &(V_mat[(movie_id-1) * NLATENT]));
+#ifdef __GNUC__
+                        double tend_dotp = rdtsc();
+#else
+                        double tend_dotp = __rdtsc();
+#endif
+                        dotp_times_per_proc[pidx2] += tend_dotp - tbegin_dotp;
   
             // Truncate pred
                         pred = std::min(MAXVAL, pred);
@@ -420,7 +442,12 @@ int main(int argc, char** argv) {
 #else
     tend = __rdtsc();
 #endif
-    printf("Time in iteration %ld of sgd %f (ms) \n", itr, ((tend - tbegin)/cpu_freq)* 1000);
+    double dotp_time_per_itr = 0;
+    for (int i = 0; i < num_procs; i++) {
+      dotp_time_per_itr += dotp_times_per_proc[i];
+    }
+    dotp_time_per_itr /= num_procs;
+    printf("Time in iteration %ld of sgd %f (ms) dotP %f (ms)\n", itr, ((tend - tbegin)/cpu_freq)* 1000, (dotp_time_per_itr) / cpu_freq * 1000);
     }
 
 
@@ -440,8 +467,8 @@ int main(int argc, char** argv) {
         pred = std::min(MAXVAL, pred);
         pred = std::max(MINVAL, pred);
 
-        const float rmse = (pred - user_movie_ratings[i].rating)*
-                           (pred - user_movie_ratings[i].rating);
+        const double rmse = (pred - user_movie_ratings[i].rating)*
+                            (pred - user_movie_ratings[i].rating);
   
         train_err += rmse;
     }

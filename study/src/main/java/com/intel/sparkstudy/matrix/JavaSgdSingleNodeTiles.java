@@ -19,13 +19,12 @@ import static java.lang.Math.*;
  */
 public class JavaSgdSingleNodeTiles {
 
-    static final int NLATENT = 20;
     static final int max_iter = 5;
     static final double MAXVAL = 1e+100;
     static final double MINVAL = -1e+100;
     static final double LAMBDA = 0.001;
     static final double STEP_DEC = 0.9;
-    static final double cpu_freq = 2.7e9;
+    //static final double cpu_freq = 2.7e9;
 
 
     static class Edge {
@@ -87,7 +86,7 @@ public class JavaSgdSingleNodeTiles {
         final int num_user_movie_ratings = parseInt(args[5]);
         //final int num_user_movie_ratings = (int) (num_users * num_movies * 0.10);  // 10% filled ratings matrix.
         final int num_procs = parseInt(args[6]);
-        final int num_nodes = 2;
+        final int num_nodes = 1;
         final Edge[] user_movie_ratings = new Edge[num_user_movie_ratings];
         final Random randGen = new Random(4562727);
         final ExecutorService procsPool = Executors.newFixedThreadPool(num_procs);
@@ -101,7 +100,7 @@ public class JavaSgdSingleNodeTiles {
         System.out.println("num_procs=" + num_procs);
         System.out.println("num_nodes=" + num_nodes);
 
-        double tbegin = System.nanoTime();
+        double tbegin = System.currentTimeMillis();
         Scanner scanner = null;
         try {
             scanner = new Scanner(new BufferedReader(new FileReader(filename)));
@@ -118,10 +117,10 @@ public class JavaSgdSingleNodeTiles {
                 scanner.close();
             }
         }
-        double tend = System.nanoTime();
-        System.out.printf("Time in data read: %f (ms)\n", (tend - tbegin) / cpu_freq * 1000);
+        double tend = System.currentTimeMillis();
+        System.out.printf("Time in data read: %f (ms)\n", tend - tbegin);
 
-        tbegin = System.nanoTime();
+        tbegin = System.currentTimeMillis();
         double[] U_mat = new double[NLATENT * num_users];
         double[] V_mat = new double[NLATENT * num_movies];
         for (int i = 0; i < num_users; i++) {
@@ -134,8 +133,8 @@ public class JavaSgdSingleNodeTiles {
                 V_mat[i * NLATENT + j] = (-1) + 2 * randGen.nextDouble();
             }
         }
-        tend = System.nanoTime();
-        System.out.printf("Time in U-V init: %f (ms)\n", (tend - tbegin) / cpu_freq * 1000);
+        tend = System.currentTimeMillis();
+        System.out.printf("Time in U-V init: %f (ms)\n", tend - tbegin);
 
 
         final int numTilesOneDim = num_nodes * num_procs;
@@ -163,7 +162,12 @@ public class JavaSgdSingleNodeTiles {
         double GAMMA = 0.001;
         for (int itr = 0; itr < max_iter; itr++)
         {
-            tbegin = System.nanoTime();
+            double[] dotp_times_per_proc = new double[num_procs];
+            for (int i = 0; i < num_procs; i++) {
+                dotp_times_per_proc[i] = 0;
+            }
+
+            tbegin = System.currentTimeMillis();
             for (int l = 0; l < num_nodes; ++l)
             {
                 int row = 0;
@@ -222,7 +226,8 @@ public class JavaSgdSingleNodeTiles {
                                                         cols[K] * num_procs +
                                                         rowsp[PIDX2] * (num_procs * num_nodes) +
                                                         colsp[PIDX2]),
-                                        user_movie_ratings, U_mat, V_mat, Gamma, NLATENT);
+                                        user_movie_ratings, U_mat, V_mat, Gamma, NLATENT,
+                                        PIDX2, dotp_times_per_proc);
                                 return true;
                             });
                         }
@@ -242,8 +247,13 @@ public class JavaSgdSingleNodeTiles {
                 }
             }
             GAMMA *= STEP_DEC;
-            tend = System.nanoTime();
-            System.out.printf("Time in iteration %d of sgd %f (ms) \n", itr, ((tend - tbegin)/cpu_freq)* 1000);
+            tend = System.currentTimeMillis();
+            double dotp_time_per_itr = 0;
+            for (int i = 0; i < num_procs; i++) {
+                dotp_time_per_itr += dotp_times_per_proc[i];
+            }
+            dotp_time_per_itr /= num_procs;
+            System.out.printf("Time in iteration %d of sgd %f (ms) dotp_per_proc %f (ms)\n", itr, tend - tbegin, dotp_time_per_itr);
         }
 
         // Calculate training error
@@ -266,7 +276,7 @@ public class JavaSgdSingleNodeTiles {
         assert procsPool.isTerminated();
     }
 
-    private static void processOneTile(Algebran algebran, ArrayList<Integer> tile, Edge[] user_movie_ratings, double[] u_mat, double[] v_mat, double GAMMA, int NLATENT) {
+    private static void processOneTile(Algebran algebran, ArrayList<Integer> tile, Edge[] user_movie_ratings, double[] u_mat, double[] v_mat, double GAMMA, int NLATENT, int procIndex, double[] dotp_times_per_proc) {
         ArrayList<Integer> v =
                 tile;
 
@@ -284,8 +294,11 @@ public class JavaSgdSingleNodeTiles {
             int user_id = user_movie_ratings[i].user;
             int movie_id = user_movie_ratings[i].movie;
 
+            double tbegin_dotp = System.currentTimeMillis();
             double pred = algebran.dotP(NLATENT, u_mat, (user_id-1) * NLATENT,
                     v_mat, (movie_id-1) * NLATENT);
+            double tend_dotp = System.currentTimeMillis();
+            dotp_times_per_proc[procIndex] += tend_dotp - tbegin_dotp;
 
             // Truncate pred
             pred = min(MAXVAL, pred);

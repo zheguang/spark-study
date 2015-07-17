@@ -8,5 +8,4 @@ target/
 data/
 *.out
 *.o
-*.dat
 *.result
