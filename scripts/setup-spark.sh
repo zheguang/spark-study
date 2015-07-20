@@ -42,6 +42,10 @@ function setupSpark {
   log "set up spark"
   cp -f $RESOURCES/spark/slaves $SPARK_CONF
   cp -f $RESOURCES/spark/spark-env.sh $SPARK_CONF
+  cp -f $RESOURCES/spark/spark-defaults.conf $SPARK_CONF
+
+  mkdir -p $RUNTIME/spark
+  mkdir -p $RUNTIME/spark/eventLog
 }
 
 function setupEnvVars {

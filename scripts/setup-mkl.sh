@@ -6,6 +6,9 @@ function change_libblas_reference() {
   update-alternatives --install /usr/lib/libblas.so.3   libblas.so.3   /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
   update-alternatives --install /usr/lib/liblapack.so   liblapack.so   /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
   update-alternatives --install /usr/lib/liblapack.so.3 liblapack.so.3 /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
+
+  sudo ln -s /opt/intel/mkl/lib/intel64/libmkl_rt.so /usr/lib/libblas.so.3gf
+  sudo ln -s /opt/intel/mkl/lib/intel64/libmkl_rt.so /usr/lib/liblapack.so.3gf
 }
 
 function update_ld_so_conf() {

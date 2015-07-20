@@ -15,7 +15,9 @@ function buildSpark {
     exit 1
   fi
   assertExists $JAVA_HOME
-  ./make-distribution.sh --skip-java-test --name hadoop-$HADOOP_VER_MAJOR --tgz -Phadoop-$HADOOP_VER_MAJOR -Pyarn
+  ./dev/change-version-to-2.11.sh
+  #./make-distribution.sh --with-tachyon --skip-java-test --name hadoop-$HADOOP_VER_MAJOR --tgz -Phadoop-$HADOOP_VER_MAJOR -Pyarn -Pscala-2.11 -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true
+  ./make-distribution.sh --with-tachyon --skip-java-test --name hadoop-$HADOOP_VER_MAJOR --tgz -Phadoop-$HADOOP_VER_MAJOR -Pyarn -Dscala-2.11
 }
 
 function copyArchive {
