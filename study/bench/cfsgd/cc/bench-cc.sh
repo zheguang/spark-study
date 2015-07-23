@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-root=$(readlink -f `dirname $0`)/../..
-my_bench=$root/bench/cc
+root=$(readlink -f `dirname $0`)/../../..
+my_bench=$root/bench/cfsgd/cc
 cd $my_bench
 
 source /opt/intel/bin/compilervars.sh intel64
@@ -75,7 +75,7 @@ function do_bench() {
 }
 
 modes=("CPP" "BLAS")
-latents=("20" "200" "2000")
+latents=("20" "200")
 
 setup
 #compile
@@ -90,9 +90,16 @@ echo "[info] end compile"
 echo "[INFO] start benchmark"
 #do_bench_s20 build/sgd_single_intel.out 1> result/sgd_single_intel.result
 #do_bench_s20 build/sgd_single_intel_blas.out 1> result/sgd_single_intel_blas.result
+
+func_mode="test"
+func=test_bench
+if [ "$1" = "result" ]; then
+  func_mode="result"
+  func=do_bench
+fi
 for l in "${latents[@]}"; do
   for m in "${modes[@]}"; do
-    do_bench $m $l 1> result/sgd_single_intel_l${l}_${m}.result
+    $func $m $l 1> $func_mode/sgd_single_intel_l${l}_${m}.result
     #test_bench $m $l 1> test/sgd_single_intel_l${l}_${m}.result
   done
 done

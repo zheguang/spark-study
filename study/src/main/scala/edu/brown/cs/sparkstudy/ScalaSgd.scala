@@ -95,9 +95,16 @@ object ScalaSgd {
     println(s"num_procs=$num_procs")
     println(s"num_nodes=$num_nodes")
 
+    val tbegin_read = System.currentTimeMillis()
     val user_movie_ratings = readRatings(filename, num_user_movie_ratings)
+    val tend_read = System.currentTimeMillis()
+    printf("Time in data read: %d (ms)\n", tend_read - tbegin_read)
+
+    val tbegin_uvinit = System.currentTimeMillis()
     val U_mat = randomMatrixOf(num_users, num_latent)
     val V_mat = randomMatrixOf(num_movies, num_latent)
+    val tend_uvinit = System.currentTimeMillis()
+    printf("Time in U-V init: %d (ms)\n", tend_uvinit - tbegin_uvinit)
 
     val tiles_mat = hashEdgesToTiles(
       user_movie_ratings,
@@ -164,14 +171,18 @@ object ScalaSgd {
 
                 (0 until num_latent).foreach { j =>
                   U_mat((e.user - 1) * num_latent + j) +=
-                    - gamma * (err * V_mat((e.movie - 1) * num_latent + j) +
-                      LAMBDA * U_mat((e.user - 1 ) * num_latent + j));
+                    - gamma * (
+                      err * V_mat((e.movie - 1) * num_latent + j) +
+                      LAMBDA * U_mat((e.user - 1 ) * num_latent + j)
+                    );
                 }
 
                 (0 until num_latent).foreach { j =>
                   V_mat((e.movie - 1) * num_latent + j) +=
-                    - gamma * (err * U_mat((e.user - 1) * num_latent + j) +
-                      LAMBDA * V_mat((e.movie - 1) * num_latent + j));
+                    - gamma * (
+                      err * U_mat((e.user - 1) * num_latent + j) +
+                      LAMBDA * V_mat((e.movie - 1) * num_latent + j)
+                    );
                 }
               }
             }
@@ -180,7 +191,7 @@ object ScalaSgd {
       }
       gamma *= STEP_DEC
       val tend = System.currentTimeMillis()
-      printf("Time in iteration %d of sgd %d (ms)\n", itr, tend - tbegin);
+      printf("Time in iteration %d of sgd %d (ms)\n", itr, tend - tbegin)
     }
 
     // Calculate training error
@@ -191,6 +202,6 @@ object ScalaSgd {
       pow(pred - e.rating, 2)
     }
     val train_err = sqrt(sqerrs.sum / num_user_movie_ratings)
-    printf("Training rmse %f\n", train_err);
+    printf("Training rmse %f\n", train_err)
   }
 }

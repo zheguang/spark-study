@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-root=$(readlink -f `dirname $0`)/../..
+root=$(readlink -f `dirname $0`)/../../..
 my_bench=$(dirname $0)
 
 #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH
@@ -79,11 +79,18 @@ check_mkl
 setup
 compile
 
+func_mode="test"
+func=test_bench
+if [ "$1" = "result" ]; then
+  func_mode="result"
+  func=do_bench
+fi
+
 echo "[INFO] start benchmark"
 for m in ${algebra_modes[@]}; do
   for l in ${latents[@]}; do
     #do_bench $l $m 1> $my_bench/result/JavaSgdSingleNodeTiles_l${l}_${m}.result
-    test_bench $l $m 1> $my_bench/test/JavaSgdSingleNodeTiles_l${l}_${m}.result
+    $func $l $m 1> $my_bench/$func_mode/JavaSgdSingleNodeTiles_l${l}_${m}.result
   done
 done
 echo "[INFO] end benchmark"

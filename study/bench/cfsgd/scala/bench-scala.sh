@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-root=$(readlink -f `dirname $0`)/../..
+root=$(readlink -f `dirname $0`)/../../..
 my_bench=$(dirname $0)
 
 function setup() {
@@ -50,9 +50,24 @@ function do_bench() {
   actual_bench_
 }
 
+modes=("scala")
+latents=("20" "200")
+
 setup
 compile
+
+func_mode="test"
+func=test_bench
+if [ "$1" = "result" ]; then
+  func_mode="result"
+  func=do_bench
+fi
+
 echo "[info] start benchmark"
-#test_bench 20 1> $my_bench/test/ScalaSgd_l20.result
-do_bench 20 1> $my_bench/result/ScalaSgd_l20.result
+for l in ${latents[@]}; do
+  for m in ${modes[@]}; do
+    #test_bench 20 1> $my_bench/test/ScalaSgd_l20.result
+    $func $l 1> $my_bench/$func_mode/ScalaSgd_l${l}_${m}.result
+  done
+done
 echo "[info] end benchmark"
