@@ -6,9 +6,11 @@ num_movies=20972
 num_user_movie_ratings=248944185
 num_procs=8
 num_nodes=1
-Time in iteration 0 of sgd 37201 (ms)
-Time in iteration 1 of sgd 16530 (ms)
-Time in iteration 2 of sgd 27766 (ms)
-Time in iteration 3 of sgd 28029 (ms)
-Time in iteration 4 of sgd 28590 (ms)
+Time in data read: 344185 (ms)
+Time in U-V init: 696 (ms)
+Time in iteration 0 of sgd 35802 (ms)
+Time in iteration 1 of sgd 17740 (ms)
+Time in iteration 2 of sgd 28205 (ms)
+Time in iteration 3 of sgd 28236 (ms)
+Time in iteration 4 of sgd 27703 (ms)
 Training rmse 0.492332

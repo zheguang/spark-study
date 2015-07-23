@@ -9,3 +9,6 @@ data/
 *.out
 *.o
 study/bench/**/*.result
+*.tgz
+*.tar*
+*.zip
