@@ -1,0 +1,34 @@
+com.intel.sparkstudy.matrix.JavaSgdSingleNodeTiles blas 20 /ext/research/graphmat/datasets/Rating_S20.train 996994 20972 248944185 8
+algebra_mode=blas
+nlatent=20
+filename=/ext/research/graphmat/datasets/Rating_S20.train
+num_users=996994
+num_movies=20972
+num_user_movie_ratings=248944185
+num_procs=8
+num_nodes=1
+Time in data read: 1015390.000000 (ms)
+Time in U-V init: 673.000000 (ms)
+Time in iteration 0 of sgd 14036.000000 (ms)
+Time in iteration 1 of sgd 13852.000000 (ms)
+Time in iteration 2 of sgd 13853.000000 (ms)
+Time in iteration 3 of sgd 13879.000000 (ms)
+Time in iteration 4 of sgd 13862.000000 (ms)
+Training rmse 0.492332
+com.intel.sparkstudy.matrix.JavaSgdSingleNodeTilesDotPTime blas 20 /ext/research/graphmat/datasets/Rating_S20.train 996994 20972 248944185 8
+algebra_mode=blas
+nlatent=20
+filename=/ext/research/graphmat/datasets/Rating_S20.train
+num_users=996994
+num_movies=20972
+num_user_movie_ratings=248944185
+num_procs=8
+num_nodes=1
+Time in data read: 905633.000000 (ms)
+Time in U-V init: 647.000000 (ms)
+Time in iteration 0 of sgd 25430.000000 (ms) dotp_per_proc 6061.875000 (ms)
+Time in iteration 1 of sgd 27004.000000 (ms) dotp_per_proc 5961.000000 (ms)
+Time in iteration 2 of sgd 26441.000000 (ms) dotp_per_proc 5988.750000 (ms)
+Time in iteration 3 of sgd 22692.000000 (ms) dotp_per_proc 5964.375000 (ms)
+Time in iteration 4 of sgd 18977.000000 (ms) dotp_per_proc 5989.250000 (ms)
+Training rmse 0.492332

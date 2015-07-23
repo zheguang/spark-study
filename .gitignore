@@ -8,4 +8,4 @@ target/
 data/
 *.out
 *.o
-*.result
+study/bench/**/*.result

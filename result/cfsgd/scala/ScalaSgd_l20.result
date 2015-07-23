@@ -1,0 +1,14 @@
+edu.brown.cs.sparkstudy.ScalaSgd 20 /ext/research/graphmat/datasets/Rating_S20.train 996994 20972 248944185 8
+nlatent=20
+filename=/ext/research/graphmat/datasets/Rating_S20.train
+num_users=996994
+num_movies=20972
+num_user_movie_ratings=248944185
+num_procs=8
+num_nodes=1
+Time in iteration 0 of sgd 37201 (ms)
+Time in iteration 1 of sgd 16530 (ms)
+Time in iteration 2 of sgd 27766 (ms)
+Time in iteration 3 of sgd 28029 (ms)
+Time in iteration 4 of sgd 28590 (ms)
+Training rmse 0.492332

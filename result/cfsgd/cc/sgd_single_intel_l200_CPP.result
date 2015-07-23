@@ -1,0 +1,33 @@
+build/sgd_single_intel_l200_CPP.out /ext/research/graphmat/datasets/Rating_S20.train 996994 20972 248944185 8
+algebra_mode=CPP
+nlatent=200
+filename=/ext/research/graphmat/datasets/Rating_S20.train
+num_users=996994
+num_movies=20972
+num_user_movie_rating=248944185
+num_procs=8
+num_nodes=1
+Time in data read 69824.617987 (ms)
+Time in U-V mat init 2746.718957 (ms)
+Time in iteration 0 of sgd 9892.044180 (ms)
+Time in iteration 1 of sgd 9888.348822 (ms)
+Time in iteration 2 of sgd 9889.559627 (ms)
+Time in iteration 3 of sgd 9889.226059 (ms)
+Time in iteration 4 of sgd 9888.583316 (ms)
+Training rmse 0.247931
+algebra_mode=CPP
+nlatent=200
+filename=/ext/research/graphmat/datasets/Rating_S20.train
+num_users=996994
+num_movies=20972
+num_user_movie_rating=248944185
+num_procs=8
+num_nodes=1
+Time in data read 69643.583923 (ms)
+Time in U-V mat init 2744.674625 (ms)
+Time in iteration 0 of sgd 17144.992824 (ms) dotP 3815.663735 (ms)
+Time in iteration 1 of sgd 17141.342686 (ms) dotP 3816.057182 (ms)
+Time in iteration 2 of sgd 17142.638924 (ms) dotP 3815.780944 (ms)
+Time in iteration 3 of sgd 17142.620853 (ms) dotP 3815.758602 (ms)
+Time in iteration 4 of sgd 17141.675378 (ms) dotP 3816.025134 (ms)
+Training rmse 0.247931
