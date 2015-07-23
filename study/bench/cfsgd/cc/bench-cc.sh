@@ -37,41 +37,47 @@ function compile() {
   #icpc -DBLAS -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_blas.out -lmkl_rt
   #icpc -DLATENT=$latent_ -D$mode -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_l${latent_}_${mode}.out
   icpc -DLATENT=$latent_ -D$mode_ -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_l${latent_}_${mode_}.out -lmkl_rt
-  icpc -DLATENT=$latent_ -D$mode_ -DDOTPTIME -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_l${latent_}_${mode_}_dotptime.out -lmkl_rt
+  #icpc -DLATENT=$latent_ -D$mode_ -DDOTPTIME -O3 -xHost -openmp $src/sgd_single_node_tiles.cpp -o build/sgd_single_intel_l${latent_}_${mode_}_dotptime.out -lmkl_rt
+  icpc -DLATENT=$latent_ -D$mode_ -O3 -xHost -openmp $src/sgd_single_node_tiles_copyedge.cpp -o build/sgd_single_intel_l${latent_}_${mode_}_copyedge.out -lmkl_rt
 }
 
 function test_bench() {
   mode_=$1
   latent_=$2
-  exe_path_=build/sgd_single_intel_l${latent_}_${mode_}.out
   datafile=$root/src/main/cc/ratings_u10_v9.dat
   nusers=1024
   nmovies=512
   nratings=524288
   nthreads=4
-  >&2 echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
-  echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
-  $exe_path_ $datafile $nusers $nmovies $nratings $nthreads
 
-  exe_dotptime_=build/sgd_single_intel_l${latent_}_${mode_}_dotptime.out
-  $exe_dotptime_ $datafile $nusers $nmovies $nratings $nthreads
+  actual_bench_
 }
 
 function do_bench() {
   mode_=$1
   latent_=$2
-  exe_path_=build/sgd_single_intel_l${latent_}_${mode_}.out
   datafile=/ext/research/graphmat/datasets/Rating_S20.train
   nusers=996994
   nmovies=20972
   nratings=248944185
   nthreads=8
+
+  actual_bench_
+}
+
+function actual_bench_() {
+  exe_path_=build/sgd_single_intel_l${latent_}_${mode_}.out
   >&2 echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
   echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
   $exe_path_ $datafile $nusers $nmovies $nratings $nthreads
 
   #exe_dotptime_=build/sgd_single_intel_l${latent_}_${mode_}_dotptime.out
   #$exe_dotptime_ $datafile $nusers $nmovies $nratings $nthreads
+
+  exe_path_=build/sgd_single_intel_l${latent_}_${mode_}_copyedge.out
+  >&2 echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
+  echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
+  $exe_path_ $datafile $nusers $nmovies $nratings $nthreads
 }
 
 modes=("CPP" "BLAS")
@@ -87,7 +93,6 @@ for l in "${latents[@]}"; do
 done
 echo "[info] end compile"
 
-echo "[INFO] start benchmark"
 #do_bench_s20 build/sgd_single_intel.out 1> result/sgd_single_intel.result
 #do_bench_s20 build/sgd_single_intel_blas.out 1> result/sgd_single_intel_blas.result
 
@@ -97,10 +102,11 @@ if [ "$1" = "result" ]; then
   func_mode="result"
   func=do_bench
 fi
+echo "[INFO] start benchmark: $func_mode"
 for l in "${latents[@]}"; do
   for m in "${modes[@]}"; do
     $func $m $l 1> $func_mode/sgd_single_intel_l${l}_${m}.result
     #test_bench $m $l 1> test/sgd_single_intel_l${l}_${m}.result
   done
 done
-echo "[INFO] done all benchmark."
+echo "[INFO] done all benchmark: $func_mode"
