@@ -24,10 +24,13 @@ object GraphxPageRank extends Logging {
     val partitionStrategy = PartitionStrategy.fromString("RandomVertexCut")
     val outFname = "file:///tmp/GraphxPagaeRank_" + fname + "_output"
 
-    val unpartitionedGraph = GraphLoader.edgeListFile(ctx, fname,
+    val unpartitionedGraph = GraphLoader.edgeListFile(
+      ctx,
+      fname,
       numEdgePartitions = numEPart,
       edgeStorageLevel = edgeStorageLevel,
-      vertexStorageLevel = vertexStorageLevel).cache()
+      vertexStorageLevel = vertexStorageLevel
+    ).cache()
     val graph = unpartitionedGraph.partitionBy(partitionStrategy)
 
     val pr = PageRank.run(graph, iters).vertices.cache()

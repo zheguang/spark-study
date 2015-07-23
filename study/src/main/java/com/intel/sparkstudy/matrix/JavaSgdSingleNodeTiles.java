@@ -184,6 +184,16 @@ public class JavaSgdSingleNodeTiles {
                     cols[k] = col;
                 }
 
+                /*System.out.println("[debug] rows anc cols:");
+                for (int x : rows) {
+                    System.out.print(x + " ");
+                }
+                System.out.println();
+                for (int x : cols) {
+                    System.out.print(x + " ");
+                }
+                System.out.println();*/
+
                 // This is the loop to be parallelized over all the nodes
                 // #pragma omp parallel for
                 for (int k = 0; k < num_nodes; ++k)
@@ -207,12 +217,27 @@ public class JavaSgdSingleNodeTiles {
                             colsp[idx] = colp;
                         }
 
+                        /*System.out.println("[debug] rowsp anc colsp:");
+                        for (int x : rowsp) {
+                            System.out.print(x + " ");
+                        }
+                        System.out.println();
+                        for (int x : colsp) {
+                            System.out.print(x + " ");
+                        }
+                        System.out.println();*/
+
                         // This loop needs to be parallelized ovre cores
                         List<Callable<Boolean>> tasks = new ArrayList<>(num_procs);
                         for(int pidx2 = 0; pidx2 < num_procs; ++pidx2) {
                             final int PIDX2 = pidx2;
                             final int K = k;
                             final double Gamma = GAMMA;
+                            /*System.out.printf("[debug] tiles matrix index: %d\n",
+                                    rows[K] * num_procs * num_nodes * num_procs +
+                                    cols[K] * num_procs +
+                                    rowsp[PIDX2] * (num_procs * num_nodes) +
+                                    colsp[PIDX2]);*/
                             tasks.add(() -> {
                                 processOneTile(
                                         algebran,

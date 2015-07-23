@@ -1,8 +1,10 @@
 
 lazy val commonSettings = Seq(
   // Pick the specified scala version
-  ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
+  ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
+  scalacOptions in Compile ++= Seq("-Xmax-classfile-name", "128")
 )
+
 
 lazy val root = (project in file("."))
   .settings(commonSettings: _*)
