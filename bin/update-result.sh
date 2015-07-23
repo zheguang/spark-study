@@ -7,7 +7,7 @@ project_root=$(dirname $0)/..
 modes=("cc" "java" "scala")
 
 if [ "${#@}" -eq 0 ]; then
-  run_modes=modes
+  run_modes=$modes
 else
   run_modes=$@
 fi

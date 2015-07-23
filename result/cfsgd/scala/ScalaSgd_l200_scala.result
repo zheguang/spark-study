@@ -6,11 +6,27 @@ num_movies=20972
 num_user_movie_ratings=248944185
 num_procs=8
 num_nodes=1
-Time in data read: 345112 (ms)
-Time in U-V init: 6809 (ms)
-Time in iteration 0 of sgd 96432 (ms)
-Time in iteration 1 of sgd 99638 (ms)
-Time in iteration 2 of sgd 224053 (ms)
-Time in iteration 3 of sgd 236331 (ms)
-Time in iteration 4 of sgd 229854 (ms)
+Time in data read: 351979 (ms)
+Time in U-V init: 6599 (ms)
+Time in iteration 0 of sgd 109420 (ms)
+Time in iteration 1 of sgd 92497 (ms)
+Time in iteration 2 of sgd 245455 (ms)
+Time in iteration 3 of sgd 241986 (ms)
+Time in iteration 4 of sgd 271094 (ms)
 Training rmse 0.482754
+edu.brown.cs.sparkstudy.BreezeSgd 200 /ext/research/graphmat/datasets/Rating_S20.train 996994 20972 248944185 8
+nlatent=200
+filename=/ext/research/graphmat/datasets/Rating_S20.train
+num_users=996994
+num_movies=20972
+num_user_movie_ratings=248944185
+num_procs=8
+num_nodes=1
+Time in data read: 336008 (ms)
+Time in U-V init: 7007 (ms)
+Time in iteration 0 of sgd 921110 (ms)
+Time in iteration 1 of sgd 918699 (ms)
+Time in iteration 2 of sgd 833712 (ms)
+Time in iteration 3 of sgd 826650 (ms)
+Time in iteration 4 of sgd 835535 (ms)
+Training rmse 0.515114
