@@ -66,10 +66,10 @@ function do_bench() {
   echo "$exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
   java -cp $fatJar $exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads 
 
-  exe_path_dotptime_=com.intel.sparkstudy.matrix.JavaSgdSingleNodeTilesDotPTime
-  >&2 echo "$exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
-  echo "$exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
-  java -cp $fatJar $exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads 
+  #exe_path_dotptime_=com.intel.sparkstudy.matrix.JavaSgdSingleNodeTilesDotPTime
+  #>&2 echo "$exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
+  #echo "$exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
+  #java -cp $fatJar $exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads 
 }
 
 algebra_modes=("blas" "java")

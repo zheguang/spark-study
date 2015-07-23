@@ -70,8 +70,8 @@ function do_bench() {
   echo "$exe_path_ $datafile $nusers $nmovies $nratings $nthreads"
   $exe_path_ $datafile $nusers $nmovies $nratings $nthreads
 
-  exe_dotptime_=build/sgd_single_intel_l${latent_}_${mode_}_dotptime.out
-  $exe_dotptime_ $datafile $nusers $nmovies $nratings $nthreads
+  #exe_dotptime_=build/sgd_single_intel_l${latent_}_${mode_}_dotptime.out
+  #$exe_dotptime_ $datafile $nusers $nmovies $nratings $nthreads
 }
 
 modes=("CPP" "BLAS")
