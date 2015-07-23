@@ -3,6 +3,8 @@ package edu.brown.cs.sparkstudy
 import java.lang.Math._
 
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.parallel.ForkJoinTaskSupport
+import scala.concurrent.forkjoin.ForkJoinPool
 import scala.io.Source
 import scala.util.Random
 
@@ -145,7 +147,9 @@ object ScalaSgd {
             println()*/
 
             // This loop needs to be parallelized over cores
-            (0 until num_procs).toList.par foreach { pidx2 =>
+            val parCores = (0 until num_procs).par
+            parCores.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(num_procs))
+            parCores foreach { pidx2 =>
             //(0 until num_procs).toList foreach { pidx2 =>
               /*printf("[debug] tiles matrxi index: %d\n",
                 rows(k) * num_procs * (num_nodes * num_procs) +
