@@ -7,14 +7,15 @@ num_movies=20972
 num_user_movie_rating=248944185
 num_procs=8
 num_nodes=1
-Time in data read 69611.464268 (ms)
-Time in U-V mat init 284.743741 (ms)
-Time in iteration 0 of sgd 2953.610487 (ms)
-Time in iteration 1 of sgd 2956.545871 (ms)
-Time in iteration 2 of sgd 2950.574984 (ms)
-Time in iteration 3 of sgd 2951.128400 (ms)
-Time in iteration 4 of sgd 2954.425787 (ms)
+Time in data read 69508.696422 (ms)
+Time in U-V mat init 283.099001 (ms)
+Time in iteration 0 of sgd 2948.590195 (ms)
+Time in iteration 1 of sgd 2968.851019 (ms)
+Time in iteration 2 of sgd 2974.333684 (ms)
+Time in iteration 3 of sgd 2974.452138 (ms)
+Time in iteration 4 of sgd 2974.469855 (ms)
 Training rmse 0.253060
+build/sgd_single_intel_l20_CPP_copyedge.out /ext/research/graphmat/datasets/Rating_S20.train 996994 20972 248944185 8
 algebra_mode=CPP
 nlatent=20
 filename=/ext/research/graphmat/datasets/Rating_S20.train
@@ -23,11 +24,11 @@ num_movies=20972
 num_user_movie_rating=248944185
 num_procs=8
 num_nodes=1
-Time in data read 69572.701353 (ms)
-Time in U-V mat init 284.432095 (ms)
-Time in iteration 0 of sgd 9624.582832 (ms) dotP 1777.204276 (ms)
-Time in iteration 1 of sgd 9596.966003 (ms) dotP 1777.261790 (ms)
-Time in iteration 2 of sgd 9597.857716 (ms) dotP 1776.941617 (ms)
-Time in iteration 3 of sgd 9599.535261 (ms) dotP 1777.384028 (ms)
-Time in iteration 4 of sgd 9598.806250 (ms) dotP 1777.088253 (ms)
+Time in data read 70026.480861 (ms)
+Time in U-V mat init 283.306988 (ms)
+Time in iteration 0 of sgd 2016.497762 (ms)
+Time in iteration 1 of sgd 2018.943975 (ms)
+Time in iteration 2 of sgd 2021.602499 (ms)
+Time in iteration 3 of sgd 2018.549833 (ms)
+Time in iteration 4 of sgd 2017.948468 (ms)
 Training rmse 0.253060
