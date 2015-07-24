@@ -21,10 +21,13 @@ function setup() {
   echo "[INFO] set up"
   rm -rf test/ && mkdir test
   rm -rf build/ && mkdir build
-  if [ -d result ]; then
-    rm -ri result/ && mkdir result
-  else
-    mkdir result
+  func_mode_=$1
+  if [ $func_mode_ = "result" ]; then
+    if [ -d result ]; then
+      rm -ri result/ && mkdir result
+    else
+      mkdir result
+    fi
   fi
 }
 
@@ -83,7 +86,14 @@ function actual_bench_() {
 modes=("CPP" "BLAS")
 latents=("20" "200")
 
-setup
+func_mode="test"
+func=test_bench
+if [ "$1" = "result" ]; then
+  func_mode="result"
+  func=do_bench
+fi
+
+setup $func_mode
 #compile
 echo "[info] start compile"
 for l in "${latents[@]}"; do
@@ -93,15 +103,6 @@ for l in "${latents[@]}"; do
 done
 echo "[info] end compile"
 
-#do_bench_s20 build/sgd_single_intel.out 1> result/sgd_single_intel.result
-#do_bench_s20 build/sgd_single_intel_blas.out 1> result/sgd_single_intel_blas.result
-
-func_mode="test"
-func=test_bench
-if [ "$1" = "result" ]; then
-  func_mode="result"
-  func=do_bench
-fi
 echo "[INFO] start benchmark: $func_mode"
 for l in "${latents[@]}"; do
   for m in "${modes[@]}"; do

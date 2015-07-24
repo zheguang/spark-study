@@ -1,14 +1,12 @@
 package edu.brown.cs.sparkstudy
 
-import java.lang.Math._
-
 import edu.brown.cs.sparkstudy.CfSgdCommon._
 
-object ScalaSgd {
+object BreezeSgd {
 
   def main(args: Array[String]): Unit = {
     if (args.length < argNames.length) {
-      printUsage("ScalaSgd")
+      printUsage("BreezeSgd")
       System.exit(123)
     }
 
@@ -34,8 +32,10 @@ object ScalaSgd {
     printf("Time in data read: %d (ms)\n", tend_read - tbegin_read)
 
     val tbegin_uvinit = System.currentTimeMillis()
-    val U_mat = randomMatrixOf(num_users, num_latent)
-    val V_mat = randomMatrixOf(num_movies, num_latent)
+    //val U_mat = randomMatrixOf(num_users, num_latent)
+    //val V_mat = randomMatrixOf(num_movies, num_latent)
+    val U_mat = randomBreezeMatrixOf(num_latent, num_users)
+    val V_mat = randomBreezeMatrixOf(num_latent, num_movies)
     val tend_uvinit = System.currentTimeMillis()
     printf("Time in U-V init: %d (ms)\n", tend_uvinit - tbegin_uvinit)
 
@@ -79,7 +79,7 @@ object ScalaSgd {
 
             // This loop needs to be parallelized over cores
             parallelize(0 until num_procs, num_procs) foreach { pidx2 =>
-            //(0 until num_procs).toList foreach { pidx2 =>
+              //(0 until num_procs).toList foreach { pidx2 =>
               /*printf("[debug] tiles matrxi index: %d\n",
                 rows(k) * num_procs * (num_nodes * num_procs) +
                 cols(k) * num_procs +
@@ -88,34 +88,35 @@ object ScalaSgd {
               )*/
               val v = tiles_mat(
                 rows(k) * num_procs * (num_nodes * num_procs) +
-                cols(k) * num_procs +
-                rowsp(pidx2) * (num_procs * num_nodes) +
-                colsp(pidx2)
+                  cols(k) * num_procs +
+                  rowsp(pidx2) * (num_procs * num_nodes) +
+                  colsp(pidx2)
               )
 
               v.foreach { i =>
                 val e = user_movie_ratings(i)
 
                 val pred = truncate(
-                  dotP(num_latent, U_mat, (e.user - 1) * num_latent, V_mat, (e.movie - 1) * num_latent)
+                  //dotP(num_latent, U_mat, (e.user - 1) * num_latent, V_mat, (e.movie - 1) * num_latent)
+                  breezeDotP(U_mat, e.user - 1, V_mat, e.movie - 1)
                 )
 
                 val err = pred - e.rating
 
                 (0 until num_latent).foreach { j =>
-                  U_mat((e.user - 1) * num_latent + j) +=
+                  U_mat(j, e.user - 1) +=
                     - gamma * (
-                      err * V_mat((e.movie - 1) * num_latent + j) +
-                      LAMBDA * U_mat((e.user - 1 ) * num_latent + j)
-                    );
+                      err * V_mat(j, e.movie - 1) +
+                        LAMBDA * U_mat(j, e.user - 1)
+                      );
                 }
 
                 (0 until num_latent).foreach { j =>
-                  V_mat((e.movie - 1) * num_latent + j) +=
+                  V_mat(j, e.movie - 1) +=
                     - gamma * (
-                      err * U_mat((e.user - 1) * num_latent + j) +
-                      LAMBDA * V_mat((e.movie - 1) * num_latent + j)
-                    );
+                      err * U_mat(j, e.user - 1) +
+                        LAMBDA * V_mat(j, e.movie - 1)
+                      );
                 }
               }
             }
@@ -130,11 +131,13 @@ object ScalaSgd {
     // Calculate training error
     val sqerrs = user_movie_ratings.map { e =>
       val pred = truncate(
-        dotP(num_latent, U_mat, (e.user - 1) * num_latent, V_mat, (e.movie - 1) * num_latent)
+        //dotP(num_latent, U_mat, (e.user - 1) * num_latent, V_mat, (e.movie - 1) * num_latent)
+        breezeDotP(U_mat, e.user - 1, V_mat, e.movie - 1)
       )
-      pow(pred - e.rating, 2)
+      Math.pow(pred - e.rating, 2)
     }
-    val train_err = sqrt(sqerrs.sum / num_user_movie_ratings)
+    val train_err = Math.sqrt(sqerrs.sum / num_user_movie_ratings)
     printf("Training rmse %f\n", train_err)
   }
 }
+

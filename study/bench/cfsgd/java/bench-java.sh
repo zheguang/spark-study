@@ -17,10 +17,13 @@ function check_mkl() {
 
 function setup() {
   echo "[INFO] set up"
-  if [ -d $my_bench/result ]; then
-    (cd $my_bench && rm -ri result/ && mkdir result)
-  else
-    (cd $my_bench && mkdir result)
+  func_mode_=$1
+  if [ $func_mode_ = "result" ]; then
+    if [ -d $my_bench/result ]; then
+      (cd $my_bench && rm -ri result/ && mkdir result)
+    else
+      (cd $my_bench && mkdir result)
+    fi
   fi
   (cd $my_bench && rm -rf test/ && mkdir test)
 }
@@ -75,16 +78,16 @@ function do_bench() {
 algebra_modes=("blas" "java")
 latents=("20" "200")
 
-check_mkl
-setup
-compile
-
 func_mode="test"
 func=test_bench
 if [ "$1" = "result" ]; then
   func_mode="result"
   func=do_bench
 fi
+
+check_mkl
+setup $func_mode
+compile
 
 echo "[INFO] start benchmark"
 for m in ${algebra_modes[@]}; do

@@ -6,10 +6,13 @@ my_bench=$(dirname $0)
 
 function setup() {
   echo "[INFO] set up"
-  if [ -d $my_bench/result ]; then
-    (cd $my_bench && rm -ri result/ && mkdir result)
-  else
-    (cd $my_bench && mkdir result)
+  func_mode_=$1
+  if [ $func_mode_ = "result" ]; then
+    if [ -d $my_bench/result ]; then
+      (cd $my_bench && rm -ri result/ && mkdir result)
+    else
+      (cd $my_bench && mkdir result)
+    fi
   fi
   (cd $my_bench && rm -rf test/ && mkdir test)
 }
@@ -21,6 +24,11 @@ function compile() {
 
 function actual_bench_() {
   exe_path_=edu.brown.cs.sparkstudy.ScalaSgd
+  >&2 echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
+  echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
+  scala -cp $fatJar $exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads 
+
+  exe_path_=edu.brown.cs.sparkstudy.BreezeSgd
   >&2 echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
   echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
   scala -cp $fatJar $exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads 
@@ -53,15 +61,15 @@ function do_bench() {
 modes=("scala")
 latents=("20" "200")
 
-setup
-compile
-
 func_mode="test"
 func=test_bench
 if [ "$1" = "result" ]; then
   func_mode="result"
   func=do_bench
 fi
+
+setup $func_mode
+compile
 
 echo "[info] start benchmark"
 for l in ${latents[@]}; do
