@@ -24,8 +24,6 @@ public class JavaSgdSingleNodeTiles {
     static final double MINVAL = -1e+100;
     static final double LAMBDA = 0.001;
     static final double STEP_DEC = 0.9;
-    //static final double cpu_freq = 2.7e9;
-
 
     static class Edge {
         final int user;
@@ -84,7 +82,6 @@ public class JavaSgdSingleNodeTiles {
         final int num_users = parseInt(args[3]);
         final int num_movies = parseInt(args[4]);
         final int num_user_movie_ratings = parseInt(args[5]);
-        //final int num_user_movie_ratings = (int) (num_users * num_movies * 0.10);  // 10% filled ratings matrix.
         final int num_procs = parseInt(args[6]);
         final int num_nodes = 1;
         final Edge[] user_movie_ratings = new Edge[num_user_movie_ratings];
@@ -184,16 +181,6 @@ public class JavaSgdSingleNodeTiles {
                     cols[k] = col;
                 }
 
-                /*System.out.println("[debug] rows anc cols:");
-                for (int x : rows) {
-                    System.out.print(x + " ");
-                }
-                System.out.println();
-                for (int x : cols) {
-                    System.out.print(x + " ");
-                }
-                System.out.println();*/
-
                 // This is the loop to be parallelized over all the nodes
                 // #pragma omp parallel for
                 for (int k = 0; k < num_nodes; ++k)
@@ -217,27 +204,12 @@ public class JavaSgdSingleNodeTiles {
                             colsp[idx] = colp;
                         }
 
-                        /*System.out.println("[debug] rowsp anc colsp:");
-                        for (int x : rowsp) {
-                            System.out.print(x + " ");
-                        }
-                        System.out.println();
-                        for (int x : colsp) {
-                            System.out.print(x + " ");
-                        }
-                        System.out.println();*/
-
                         // This loop needs to be parallelized ovre cores
                         List<Callable<Boolean>> tasks = new ArrayList<>(num_procs);
                         for(int pidx2 = 0; pidx2 < num_procs; ++pidx2) {
                             final int PIDX2 = pidx2;
                             final int K = k;
                             final double Gamma = GAMMA;
-                            /*System.out.printf("[debug] tiles matrix index: %d\n",
-                                    rows[K] * num_procs * num_nodes * num_procs +
-                                    cols[K] * num_procs +
-                                    rowsp[PIDX2] * (num_procs * num_nodes) +
-                                    colsp[PIDX2]);*/
                             tasks.add(() -> {
                                 processOneTile(
                                         algebran,
@@ -293,14 +265,6 @@ public class JavaSgdSingleNodeTiles {
     private static void processOneTile(Algebran algebran, ArrayList<Integer> tile, Edge[] user_movie_ratings, double[] u_mat, double[] v_mat, double GAMMA, int NLATENT) {
         ArrayList<Integer> v =
                 tile;
-
-        // printf("%d %d %d %d %d\n",
-        // rows[k], cols[k], rowsp[pidx2], colsp[pidx2],
-        // rows[k] * num_procs * num_nodes * num_procs +
-        // cols[k] * num_procs +
-        // rowsp[pidx2] * (num_procs * num_nodes) +
-        // colsp[pidx2]);
-
 
         for(int idx = 0; idx < v.size(); ++idx)
         {

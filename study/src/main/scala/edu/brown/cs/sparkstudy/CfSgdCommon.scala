@@ -59,8 +59,6 @@ object CfSgdCommon {
     val tiles_table_ = Array.tabulate(num_tiles_x * num_tiles_y) {
       _ => new ArrayBuffer[Int]
     }
-    //edges.map(e => tiles_table_(hash(e)) )
-    //tiles_table_.map( b => b.toArray)
     var i = 0
     while (i < edges.length) {
       tiles_table_(hash(edges(i))).append(i)

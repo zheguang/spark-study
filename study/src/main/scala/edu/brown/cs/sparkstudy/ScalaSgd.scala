@@ -47,10 +47,6 @@ object ScalaSgd {
       num_movies
     )
 
-    //printf("[debug] tiles_mat:")
-    //printf("[debug] tiles_mat:\n%s\n", tiles_mat.deep.mkString("\n"))
-    //tiles_mat.foreach { x => println(x.length) }
-
     var gamma = 0.001
     val max_iter = 5
     (0 until max_iter).foreach { itr =>
@@ -58,11 +54,6 @@ object ScalaSgd {
       (0 until num_nodes).foreach { l =>
         val rows = (0 until num_nodes).toArray
         val cols = (0 until num_nodes).map(x => (l + x) % num_nodes)
-        /*println("[debug] rows and cols:")
-        rows.foreach(x => print(x + " "))
-        println()
-        cols.foreach(x => print(x + " "))
-        println()*/
 
         // This is the loop to be parallelized over all the nodes
         // #pragma omp parallel for
@@ -71,21 +62,8 @@ object ScalaSgd {
             val rowsp = (0 until num_procs).toArray
             val colsp = (0 until num_procs).map(x => (pidx1 + x) % num_procs)
 
-            /*println("[debug] rowsp and colsp:")
-            rowsp.foreach(x => print(x + " "))
-            println()
-            colsp.foreach(x => print(x + " "))
-            println()*/
-
             // This loop needs to be parallelized over cores
             parallelize(0 until num_procs, num_procs) foreach { pidx2 =>
-            //(0 until num_procs).toList foreach { pidx2 =>
-              /*printf("[debug] tiles matrxi index: %d\n",
-                rows(k) * num_procs * (num_nodes * num_procs) +
-                cols(k) * num_procs +
-                rowsp(pidx2) * (num_procs * num_nodes) +
-                colsp(pidx2)
-              )*/
               val v = tiles_mat(
                 rows(k) * num_procs * (num_nodes * num_procs) +
                 cols(k) * num_procs +

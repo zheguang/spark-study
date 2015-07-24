@@ -32,8 +32,6 @@ object BreezeSgd {
     printf("Time in data read: %d (ms)\n", tend_read - tbegin_read)
 
     val tbegin_uvinit = System.currentTimeMillis()
-    //val U_mat = randomMatrixOf(num_users, num_latent)
-    //val V_mat = randomMatrixOf(num_movies, num_latent)
     val U_mat = randomBreezeMatrixOf(num_latent, num_users)
     val V_mat = randomBreezeMatrixOf(num_latent, num_movies)
     val tend_uvinit = System.currentTimeMillis()
@@ -47,10 +45,6 @@ object BreezeSgd {
       num_movies
     )
 
-    //printf("[debug] tiles_mat:")
-    //printf("[debug] tiles_mat:\n%s\n", tiles_mat.deep.mkString("\n"))
-    //tiles_mat.foreach { x => println(x.length) }
-
     var gamma = 0.001
     val max_iter = 5
     (0 until max_iter).foreach { itr =>
@@ -58,11 +52,6 @@ object BreezeSgd {
       (0 until num_nodes).foreach { l =>
         val rows = (0 until num_nodes).toArray
         val cols = (0 until num_nodes).map(x => (l + x) % num_nodes)
-        /*println("[debug] rows and cols:")
-        rows.foreach(x => print(x + " "))
-        println()
-        cols.foreach(x => print(x + " "))
-        println()*/
 
         // This is the loop to be parallelized over all the nodes
         // #pragma omp parallel for
@@ -71,21 +60,8 @@ object BreezeSgd {
             val rowsp = (0 until num_procs).toArray
             val colsp = (0 until num_procs).map(x => (pidx1 + x) % num_procs)
 
-            /*println("[debug] rowsp and colsp:")
-            rowsp.foreach(x => print(x + " "))
-            println()
-            colsp.foreach(x => print(x + " "))
-            println()*/
-
             // This loop needs to be parallelized over cores
             parallelize(0 until num_procs, num_procs) foreach { pidx2 =>
-              //(0 until num_procs).toList foreach { pidx2 =>
-              /*printf("[debug] tiles matrxi index: %d\n",
-                rows(k) * num_procs * (num_nodes * num_procs) +
-                cols(k) * num_procs +
-                rowsp(pidx2) * (num_procs * num_nodes) +
-                colsp(pidx2)
-              )*/
               val v = tiles_mat(
                 rows(k) * num_procs * (num_nodes * num_procs) +
                   cols(k) * num_procs +
@@ -97,7 +73,6 @@ object BreezeSgd {
                 val e = user_movie_ratings(i)
 
                 val pred = truncate(
-                  //dotP(num_latent, U_mat, (e.user - 1) * num_latent, V_mat, (e.movie - 1) * num_latent)
                   breezeDotP(U_mat, e.user - 1, V_mat, e.movie - 1)
                 )
 
@@ -131,7 +106,6 @@ object BreezeSgd {
     // Calculate training error
     val sqerrs = user_movie_ratings.map { e =>
       val pred = truncate(
-        //dotP(num_latent, U_mat, (e.user - 1) * num_latent, V_mat, (e.movie - 1) * num_latent)
         breezeDotP(U_mat, e.user - 1, V_mat, e.movie - 1)
       )
       Math.pow(pred - e.rating, 2)
