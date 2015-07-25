@@ -2,7 +2,7 @@ package edu.brown.cs.sparkstudy
 
 import java.lang.Math._
 
-import breeze.linalg.DenseMatrix
+import breeze.linalg.{DenseVector, DenseMatrix}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.parallel.ForkJoinTaskSupport
@@ -12,8 +12,24 @@ import scala.io.Source
 import scala.util.Random
 
 object CfSgdCommon {
-  
-  case class Edge(user: Int, movie: Int, rating: Int)
+
+  trait Edge {
+    def user: Int
+    def movie: Int
+    def rating: Int
+  }
+
+  case class SimpleEdge(user: Int, movie: Int, rating: Int) extends Edge
+
+  case class EdgeBreeze(user_movie_rating_triplet: DenseVector[Int]) extends Edge {
+    override def user = user_movie_rating_triplet(0)
+    override def movie = user_movie_rating_triplet(1)
+    override def rating = user_movie_rating_triplet(2)
+  }
+
+  object EdgeBreeze {
+    def apply(user: Int, movie: Int, rating: Int) = new EdgeBreeze(DenseVector(user, movie, rating))
+  }
 
   val MAXVAL = 1e+100
   val MINVAL = -1e+100
@@ -30,7 +46,14 @@ object CfSgdCommon {
   def readRatings(filename: String, num_ratings: Int): Array[Edge] = {
     Source.fromFile(filename).getLines().map { line =>
       val e = line.split(" ").map(_.toInt)
-      Edge(user = e(0), e(1), e(2))
+      SimpleEdge(e(0), e(1), e(2)).asInstanceOf[Edge]
+    }.toArray.take(num_ratings)
+  }
+
+  def readRatingsBreeze(filename: String, num_ratings: Int): Array[Edge] ={
+    Source.fromFile(filename).getLines().map { line =>
+      val e = line.split(" ").map(_.toInt)
+      EdgeBreeze(e(0), e(1), e(2)).asInstanceOf[Edge]
     }.toArray.take(num_ratings)
   }
 

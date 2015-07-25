@@ -27,7 +27,7 @@ object BreezeSgd {
     println(s"num_nodes=$num_nodes")
 
     val tbegin_read = System.currentTimeMillis()
-    val user_movie_ratings = readRatings(filename, num_user_movie_ratings)
+    val user_movie_ratings = readRatingsBreeze(filename, num_user_movie_ratings)
     val tend_read = System.currentTimeMillis()
     printf("Time in data read: %d (ms)\n", tend_read - tbegin_read)
 
