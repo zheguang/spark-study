@@ -15,9 +15,17 @@ function buildSpark {
     exit 1
   fi
   assertExists $JAVA_HOME
-  ./dev/change-version-to-2.11.sh
-  #./make-distribution.sh --with-tachyon --skip-java-test --name hadoop-$HADOOP_VER_MAJOR --tgz -Phadoop-$HADOOP_VER_MAJOR -Pyarn -Pscala-2.11 -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true
-  ./make-distribution.sh --with-tachyon --skip-java-test --name hadoop-$HADOOP_VER_MAJOR --tgz -Phadoop-$HADOOP_VER_MAJOR -Pyarn -Dscala-2.11
+
+  (cd $PROJECT/third_party/spark && git reset --hard HEAD && $MAVEN clean)
+
+  if [ $SPARK_VER_MAJOR = "2.10" ]; then
+    ./dev/change-version-to-2.10.sh
+    ./make-distribution.sh --with-tachyon --skip-java-test --name hadoop-$HADOOP_VER_MAJOR-scala-2.10 --tgz -Phadoop-$HADOOP_VER_MAJOR -Pyarn
+  else
+    ./dev/change-version-to-2.11.sh
+    #./make-distribution.sh --with-tachyon --skip-java-test --name hadoop-$HADOOP_VER_MAJOR --tgz -Phadoop-$HADOOP_VER_MAJOR -Pyarn -Dscala-2.11 
+    ./make-distribution.sh --with-tachyon --skip-java-test --name hadoop-$HADOOP_VER_MAJOR-scala-2.11 --tgz -Phadoop-$HADOOP_VER_MAJOR -Pyarn -Dscala-2.11
+  fi
 }
 
 function copyArchive {

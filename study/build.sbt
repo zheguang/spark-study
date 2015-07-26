@@ -1,24 +1,15 @@
-
-lazy val commonSettings = Seq(
-  // Pick the specified scala version
-  ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
-  scalacOptions in Compile ++= Seq("-Xmax-classfile-name", "128")
-)
-
-
 lazy val root = (project in file("."))
-  .settings(commonSettings: _*)
   .settings(
     name := "study",
-    scalaVersion := "2.11.7",
+    scalaVersion := "2.11.4",
     scalaHome := Some(file("/usr/local/scala")))
 
 val sparkVer = "1.4"
 
 libraryDependencies ++= Seq(
-  "edu.brown.cs.sam" % "spark" % sparkVer % "provided",
-  "edu.brown.cs.sam" % "spark-assembly" % sparkVer % "provided",
-  "edu.brown.cs.sam" % "spark-examples" % sparkVer % "provided",
+  "edu.brown.cs.sam" %% "spark" % sparkVer % "provided",
+  "edu.brown.cs.sam" %% "spark-assembly" % sparkVer % "provided",
+  "edu.brown.cs.sam" %% "spark-examples" % sparkVer % "provided",
   "org.scalanlp" %% "breeze" % "0.11.2",
   // native libraries are not included by default. add this if you want them (as of 0.7)
   // native libraries greatly improve performance, but increase jar sizes.
@@ -38,5 +29,3 @@ resolvers ++= Seq(
   "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
   "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/"
 )
-
-scalacOptions ++= Seq("-Xmax-classfile-name","240")
