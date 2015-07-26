@@ -1,5 +1,6 @@
 package edu.brown.cs.sparkstudy
 
+import breeze.linalg.DenseMatrix
 import edu.brown.cs.sparkstudy.CfSgdCommon._
 
 object BreezeSgd {
@@ -45,6 +46,12 @@ object BreezeSgd {
       num_movies
     )
 
+    train(num_procs, num_nodes, user_movie_ratings, U_mat, V_mat, num_latent, tiles_mat)
+
+    computeTrainingError(num_user_movie_ratings, user_movie_ratings, U_mat, V_mat)
+  }
+
+  def train(num_procs: Int, num_nodes: Int, user_movie_ratings: Array[Edge], U_mat: DenseMatrix[Double], V_mat: DenseMatrix[Double], num_latent: Int, tiles_mat: Array[Array[Int]]): Unit = {
     var gamma = 0.001
     val max_iter = 5
     (0 until max_iter).foreach { itr =>
@@ -78,21 +85,27 @@ object BreezeSgd {
 
                 val err = pred - e.rating
 
-                (0 until num_latent).foreach { j =>
+                /*(0 until num_latent).foreach { j =>
                   U_mat(j, e.user - 1) +=
-                    - gamma * (
+                    -gamma * (
                       err * V_mat(j, e.movie - 1) +
                         LAMBDA * U_mat(j, e.user - 1)
                       );
-                }
+                }*/
+                U_mat(::, e.user - 1) += -gamma * (
+                  err * V_mat(::, e.movie - 1) + LAMBDA * U_mat(::, e.user - 1)
+                )
 
-                (0 until num_latent).foreach { j =>
+                /*(0 until num_latent).foreach { j =>
                   V_mat(j, e.movie - 1) +=
-                    - gamma * (
+                    -gamma * (
                       err * U_mat(j, e.user - 1) +
                         LAMBDA * V_mat(j, e.movie - 1)
                       );
-                }
+                }*/
+                V_mat(::, e.movie - 1) += -gamma * (
+                  err * U_mat(::, e.user - 1) + LAMBDA * V_mat(::, e.movie - 1)
+                )
               }
             }
           }
@@ -102,7 +115,9 @@ object BreezeSgd {
       val tend = System.currentTimeMillis()
       printf("Time in iteration %d of sgd %d (ms)\n", itr, tend - tbegin)
     }
+  }
 
+  def computeTrainingError(num_user_movie_ratings: Int, user_movie_ratings: Array[Edge], U_mat: DenseMatrix[Double], V_mat: DenseMatrix[Double]): Unit = {
     // Calculate training error
     val sqerrs = user_movie_ratings.map { e =>
       val pred = truncate(
