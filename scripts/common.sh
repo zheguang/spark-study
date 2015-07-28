@@ -10,7 +10,7 @@ INSTALL=/usr/local
 RUNTIME=/var
 
 function scalaVersion {
-  verStr=$(scala -version 2>&1)
+  verStr=$(/usr/local/scala/bin/scala -version 2>&1)
   echo $verStr | awk -F' ' '{print $5}'
 }
 
