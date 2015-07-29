@@ -3,15 +3,22 @@ package edu.brown.cs.sparkstudy
 import java.lang.Math._
 
 import breeze.linalg.{DenseVector, DenseMatrix}
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.parallel.immutable.ParRange
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.io.Source
+import scala.reflect.ClassTag
 import scala.util.Random
 
 object CfSgdCommon {
+
+  // TODO: create Tile data type, internally being a sparse matrix
+  // When doing so, need to reserve this Array-based Tile for ScalaSgd
+  case class Tile[T](data: Array[T])
 
   trait Edge {
     def user: Int
@@ -65,7 +72,28 @@ object CfSgdCommon {
     DenseMatrix.rand(rows, cols)
   }
 
-  def hashEdgesToTiles(edges: Array[Edge], num_tiles_x: Int, num_tiles_y: Int, num_users: Int, num_movies: Int): Array[Array[Int]] = {
+  def hashEdgeIndicesToTiles(edges: Array[Edge],
+                             num_tiles_x: Int,
+                             num_tiles_y: Int,
+                             num_users: Int,
+                             num_movies: Int): Array[Tile[Int]] = {
+    hashEdgesToTiles(edges, num_tiles_x, num_tiles_y, num_users, num_movies, i => i)
+  }
+
+  def hashEdgeDataToTiles(edges: Array[Edge],
+                          num_tiles_x: Int,
+                          num_tiles_y: Int,
+                          num_users: Int,
+                          num_movies: Int): Array[Tile[Edge]] = {
+    hashEdgesToTiles(edges, num_tiles_x, num_tiles_y, num_users, num_movies, i => edges(i))
+  }
+
+  private def hashEdgesToTiles[T: ClassTag](edges: Array[Edge],
+                          num_tiles_x: Int,
+                          num_tiles_y: Int,
+                          num_users: Int,
+                          num_movies: Int,
+                          filler: (Int) => T): Array[Tile[T]] = {
     def hash(e: Edge): Int = {
       val num_users_per_tile = floor(num_users.toDouble / num_tiles_x)
       val num_movies_per_tile = floor(num_movies.toDouble / num_tiles_y)
@@ -77,17 +105,24 @@ object CfSgdCommon {
         floor((e.movie - 1) / num_movies_per_tile).toInt, // movie_id starts from 1
         num_tiles_y - 1
       )
-      tile_x * num_tiles_x + tile_y
+      tile_x * num_tiles_y + tile_y
     }
+
     val tiles_table_ = Array.tabulate(num_tiles_x * num_tiles_y) {
-      _ => new ArrayBuffer[Int]
+      _ => new ArrayBuffer[T]
     }
     var i = 0
     while (i < edges.length) {
-      tiles_table_(hash(edges(i))).append(i)
+      tiles_table_(hash(edges(i))).append(filler(i))
       i += 1
     }
-    tiles_table_.map(b => b.toArray)
+    tiles_table_.map(b => Tile(b.toArray))
+  }
+
+  def toEdgeTileRdds(edgePartitionTiles: Array[Array[Edge]], sc: SparkContext): Array[RDD[Edge]] = {
+    edgePartitionTiles.map { tile =>
+      sc.parallelize(tile, 1) // No parallelism, because each core takes exactly one tile (=RDD) at a time.
+    }
   }
 
   def truncate(x: Double): Double = {

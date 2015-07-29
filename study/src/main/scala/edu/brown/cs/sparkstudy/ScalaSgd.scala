@@ -39,7 +39,7 @@ object ScalaSgd {
     val tend_uvinit = System.currentTimeMillis()
     printf("Time in U-V init: %d (ms)\n", tend_uvinit - tbegin_uvinit)
 
-    val tiles_mat = hashEdgesToTiles(
+    val tiles_mat = hashEdgeIndicesToTiles(
       user_movie_ratings,
       num_tiles_x = num_nodes * num_procs,
       num_tiles_y = num_nodes * num_procs,
@@ -71,7 +71,7 @@ object ScalaSgd {
                 colsp(pidx2)
               )
 
-              v.foreach { i =>
+              v.data foreach { i =>
                 val e = user_movie_ratings(i)
 
                 val pred = truncate(

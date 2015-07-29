@@ -1,7 +1,8 @@
 package edu.brown.cs.sparkstudy
 
-import breeze.linalg.DenseMatrix
+import breeze.linalg.{Matrix, DenseMatrix}
 import edu.brown.cs.sparkstudy.CfSgdCommon._
+import org.apache.spark.mllib.linalg.SparseMatrix
 
 object BreezeSgd {
 
@@ -38,20 +39,23 @@ object BreezeSgd {
     val tend_uvinit = System.currentTimeMillis()
     printf("Time in U-V init: %d (ms)\n", tend_uvinit - tbegin_uvinit)
 
-    val tiles_mat = hashEdgesToTiles(
+    val num_tiles_x = num_nodes * num_procs
+    val num_tiles_y = num_nodes * num_procs
+    val tiles = hashEdgeIndicesToTiles(
       user_movie_ratings,
-      num_tiles_x = num_nodes * num_procs,
-      num_tiles_y = num_nodes * num_procs,
+      num_tiles_x,
+      num_tiles_y,
       num_users,
       num_movies
     )
+    val tiles_mat = new DenseMatrix(num_tiles_x, num_tiles_y, tiles)
 
     train(num_procs, num_nodes, user_movie_ratings, U_mat, V_mat, num_latent, tiles_mat)
 
     computeTrainingError(num_user_movie_ratings, user_movie_ratings, U_mat, V_mat)
   }
 
-  def train(num_procs: Int, num_nodes: Int, user_movie_ratings: Array[Edge], U_mat: DenseMatrix[Double], V_mat: DenseMatrix[Double], num_latent: Int, tiles_mat: Array[Array[Int]]): Unit = {
+  def train(num_procs: Int, num_nodes: Int, user_movie_ratings: Array[Edge], U_mat: DenseMatrix[Double], V_mat: DenseMatrix[Double], num_latent: Int, tiles_mat: DenseMatrix[Tile[Int]]): Unit = {
     var gamma = 0.001
     val max_iter = 5
     (0 until max_iter).foreach { itr =>
@@ -64,19 +68,25 @@ object BreezeSgd {
         // #pragma omp parallel for
         (0 until num_nodes).foreach { k =>
           (0 until num_procs).foreach { pidx1 =>
+            // diagnoal participating tiles per iter
             val rowsp = (0 until num_procs).toArray
             val colsp = (0 until num_procs).map(x => (pidx1 + x) % num_procs)
 
             // This loop needs to be parallelized over cores
             parallelize(0 until num_procs, num_procs) foreach { pidx2 =>
+              // skip k nodes worth of procs, and skip to my proc
+              //val v = tiles_mat(
+              //  rows(k) * num_procs * (num_nodes * num_procs) +
+              //    cols(k) * num_procs +
+              //    rowsp(pidx2) * (num_procs * num_nodes) +
+              //    colsp(pidx2)
+              //)
               val v = tiles_mat(
-                rows(k) * num_procs * (num_nodes * num_procs) +
-                  cols(k) * num_procs +
-                  rowsp(pidx2) * (num_procs * num_nodes) +
-                  colsp(pidx2)
+                rows(k) * num_procs + rowsp(pidx2),
+                cols(k) * num_procs + colsp(pidx2)
               )
 
-              v.foreach { i =>
+              v.data foreach { i =>
                 val e = user_movie_ratings(i)
 
                 val pred = truncate(
