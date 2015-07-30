@@ -58,10 +58,5 @@ object SparkSgd {
       // take submatrix of V_mat(:, movie_id range)
       V_mat(::, tile.data.minBy(_.movie).movie to tile.data.maxBy(_.movie).movie)
     }
-
-    // TODO: customize partition function
-    val tiles_mat_rdd = sc.parallelize(tiles_mat).cache()
-    val U_mat_rdd = sc.parallelize(U_mats).cache()
-    val V_mat_rdd = sc.parallelize(V_mats).cache()
   }
 }

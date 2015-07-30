@@ -18,7 +18,7 @@ object CfSgdCommon {
 
   // TODO: create Tile data type, internally being a sparse matrix
   // When doing so, need to reserve this Array-based Tile for ScalaSgd
-  case class Tile[T](data: Array[T])
+  case class Tile[T: ClassTag](data: Array[T])
 
   trait Edge {
     def user: Int

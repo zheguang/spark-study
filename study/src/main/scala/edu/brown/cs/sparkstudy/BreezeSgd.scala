@@ -75,6 +75,7 @@ object BreezeSgd {
             // This loop needs to be parallelized over cores
             parallelize(0 until num_procs, num_procs) foreach { pidx2 =>
               // skip k nodes worth of procs, and skip to my proc
+              // tile = per proc work
               //val v = tiles_mat(
               //  rows(k) * num_procs * (num_nodes * num_procs) +
               //    cols(k) * num_procs +
