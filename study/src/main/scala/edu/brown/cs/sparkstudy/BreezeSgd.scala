@@ -74,6 +74,7 @@ object BreezeSgd {
 
             // This loop needs to be parallelized over cores
             parallelize(0 until num_procs, num_procs) foreach { pidx2 =>
+            //(0 until num_procs).foreach { pidx2 =>
               // skip k nodes worth of procs, and skip to my proc
               // tile = per proc work
               //val v = tiles_mat(
@@ -92,31 +93,38 @@ object BreezeSgd {
 
                 val pred = truncate(
                   breezeDotP(U_mat, e.user - 1, V_mat, e.movie - 1)
+                  //dotP(20, U_mat.data, (e.user - 1)*20, V_mat.data, (e.movie - 1)*20)
                 )
 
                 val err = pred - e.rating
 
                 /*(0 until num_latent).foreach { j =>
-                  U_mat(j, e.user - 1) +=
+                  U_mat.unsafeUpdate(j, e.user - 1, U_mat(j, e.user - 1)
                     -gamma * (
                       err * V_mat(j, e.movie - 1) +
                         LAMBDA * U_mat(j, e.user - 1)
-                      );
+                      )
+                  );
                 }*/
-                U_mat(::, e.user - 1) += -gamma * (
+                /*U_mat(::, e.user - 1) :+= -gamma * (
                   err * V_mat(::, e.movie - 1) + LAMBDA * U_mat(::, e.user - 1)
-                )
+                )*/
+                val u_ = -gamma * (err * V_mat(::, e.movie - 1) + LAMBDA * U_mat(::, e.user - 1))
+                U_mat(::, e.user - 1) :+= u_
 
                 /*(0 until num_latent).foreach { j =>
-                  V_mat(j, e.movie - 1) +=
+                  V_mat.unsafeUpdate(j, e.movie - 1, V_mat(j, e.movie - 1)
                     -gamma * (
                       err * U_mat(j, e.user - 1) +
                         LAMBDA * V_mat(j, e.movie - 1)
-                      );
+                      )
+                  );
                 }*/
-                V_mat(::, e.movie - 1) += -gamma * (
+                /*V_mat(::, e.movie - 1) :+= -gamma * (
                   err * U_mat(::, e.user - 1) + LAMBDA * V_mat(::, e.movie - 1)
-                )
+                )*/
+                val v_ = -gamma * (err * U_mat(::, e.user - 1) + LAMBDA * V_mat(::, e.movie - 1))
+                V_mat(::, e.movie - 1) :+= v_
               }
             }
           }
@@ -130,7 +138,7 @@ object BreezeSgd {
 
   def computeTrainingError(num_user_movie_ratings: Int, user_movie_ratings: Array[Edge], U_mat: DenseMatrix[Double], V_mat: DenseMatrix[Double]): Unit = {
     // Calculate training error
-    val sqerrs = user_movie_ratings.map { e =>
+    val sqerrs = user_movie_ratings.par map { e =>
       val pred = truncate(
         breezeDotP(U_mat, e.user - 1, V_mat, e.movie - 1)
       )

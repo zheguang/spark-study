@@ -2,6 +2,7 @@ package edu.brown.cs.sparkstudy
 
 import java.lang.Math._
 
+import breeze.linalg.DenseMatrix
 import edu.brown.cs.sparkstudy.CfSgdCommon._
 
 object ScalaSgd {
@@ -76,6 +77,7 @@ object ScalaSgd {
 
                 val pred = truncate(
                   dotP(num_latent, U_mat, (e.user - 1) * num_latent, V_mat, (e.movie - 1) * num_latent)
+                  //breezeDotP(new DenseMatrix(num_latent, num_users, U_mat), e.user - 1, new DenseMatrix(num_latent, num_movies, V_mat), e.movie - 1)
                 )
 
                 val err = pred - e.rating

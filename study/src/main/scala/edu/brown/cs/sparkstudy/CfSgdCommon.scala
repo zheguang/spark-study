@@ -51,17 +51,17 @@ object CfSgdCommon {
   }
 
   def readRatings(filename: String, num_ratings: Int): Array[Edge] = {
-    Source.fromFile(filename).getLines().map { line =>
+    Source.fromFile(filename).getLines().take(num_ratings).map { line =>
       val e = line.split(" ").map(_.toInt)
       SimpleEdge(e(0), e(1), e(2)).asInstanceOf[Edge]
-    }.toArray.take(num_ratings)
+    }.toArray
   }
 
   def readRatingsBreeze(filename: String, num_ratings: Int): Array[Edge] ={
-    Source.fromFile(filename).getLines().map { line =>
+    Source.fromFile(filename).getLines().take(num_ratings).map { line =>
       val e = line.split(" ").map(_.toInt)
       EdgeBreeze(e(0), e(1), e(2)).asInstanceOf[Edge]
-    }.toArray.take(num_ratings)
+    }.toArray
   }
 
   def randomMatrixOf(rows: Int, cols: Int): Array[Double] = {
