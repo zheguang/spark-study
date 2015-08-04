@@ -35,8 +35,8 @@ object ScalaSgd {
     printf("Time in data read: %d (ms)\n", tend_read - tbegin_read)
 
     val tbegin_uvinit = System.currentTimeMillis()
-    val U_mat = randomMatrixOf(num_users, num_latent)
-    val V_mat = randomMatrixOf(num_movies, num_latent)
+    val U_mat = randomMatrixOf(num_users, num_latent) // WARNING: row major for latent vector
+    val V_mat = randomMatrixOf(num_movies, num_latent) // WARNING: row major for latent vector
     val tend_uvinit = System.currentTimeMillis()
     printf("Time in U-V init: %d (ms)\n", tend_uvinit - tbegin_uvinit)
 

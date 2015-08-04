@@ -68,32 +68,25 @@ object CfSgdCommon {
     Array.tabulate(rows * cols)(_ => (-1) + 2 * randGen.nextDouble())
   }
 
+  def randomMatrixOfVectors(rows: Int, cols: Int): Array[Array[Double]] = {
+    Array.tabulate(rows, cols){
+      case (_, _) => (-1) + 2 * randGen.nextDouble()
+    }
+  }
+
   def randomBreezeMatrixOf(rows: Int, cols: Int): DenseMatrix[Double] = {
     DenseMatrix.rand(rows, cols)
   }
 
-  def hashEdgeIndicesToTiles(edges: Array[Edge],
-                             num_tiles_x: Int,
-                             num_tiles_y: Int,
-                             num_users: Int,
-                             num_movies: Int): Array[Tile[Int]] = {
+  def hashEdgeIndicesToTiles(edges: Array[Edge], num_tiles_x: Int, num_tiles_y: Int, num_users: Int, num_movies: Int): Array[Tile[Int]] = {
     hashEdgesToTiles(edges, num_tiles_x, num_tiles_y, num_users, num_movies, i => i)
   }
 
-  def hashEdgeDataToTiles(edges: Array[Edge],
-                          num_tiles_x: Int,
-                          num_tiles_y: Int,
-                          num_users: Int,
-                          num_movies: Int): Array[Tile[Edge]] = {
+  def hashEdgeDataToTiles(edges: Array[Edge], num_tiles_x: Int, num_tiles_y: Int, num_users: Int, num_movies: Int): Array[Tile[Edge]] = {
     hashEdgesToTiles(edges, num_tiles_x, num_tiles_y, num_users, num_movies, i => edges(i))
   }
 
-  private def hashEdgesToTiles[T: ClassTag](edges: Array[Edge],
-                          num_tiles_x: Int,
-                          num_tiles_y: Int,
-                          num_users: Int,
-                          num_movies: Int,
-                          filler: (Int) => T): Array[Tile[T]] = {
+  private def hashEdgesToTiles[T: ClassTag](edges: Array[Edge], num_tiles_x: Int, num_tiles_y: Int, num_users: Int, num_movies: Int, filler: (Int) => T): Array[Tile[T]] = {
     def hash(e: Edge): Int = {
       val num_users_per_tile = floor(num_users.toDouble / num_tiles_x)
       val num_movies_per_tile = floor(num_movies.toDouble / num_tiles_y)
@@ -139,6 +132,18 @@ object CfSgdCommon {
     result
   }
 
+  def matrixMultiply(u_mat: RDD[Array[Double]], v_mat: RDD[Array[Double]]): RDD[Double] = {
+    u_mat.cartesian(v_mat).map { case (u, v) =>
+      var result = 0.0
+      var i = 0
+      while (i < u.length) {
+        result += u(i) * v(i)
+        i += 1
+      }
+      truncate(result)
+    }
+  }
+
   def breezeDotP(U_mat: DenseMatrix[Double], u_idx: Int, V_mat: DenseMatrix[Double], v_idx: Int): Double = {
     U_mat(::, u_idx) dot V_mat(::, v_idx)
   }
@@ -147,5 +152,9 @@ object CfSgdCommon {
     val result = range.par
     result.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(parallel_level))
     result
+  }
+
+  def numUniqueIn(tile: Tile[Edge], idOf: (Edge) => Int): Int = {
+    tile.data.map(idOf(_)).toSet.size
   }
 }

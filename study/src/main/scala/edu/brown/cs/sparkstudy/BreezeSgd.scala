@@ -34,8 +34,8 @@ object BreezeSgd {
     printf("Time in data read: %d (ms)\n", tend_read - tbegin_read)
 
     val tbegin_uvinit = System.currentTimeMillis()
-    val U_mat = randomBreezeMatrixOf(num_latent, num_users)
-    val V_mat = randomBreezeMatrixOf(num_latent, num_movies)
+    val U_mat = randomBreezeMatrixOf(num_latent, num_users) // A: column major for latent dimension
+    val V_mat = randomBreezeMatrixOf(num_latent, num_movies) // WARNING: column major for latent dimension
     val tend_uvinit = System.currentTimeMillis()
     printf("Time in U-V init: %d (ms)\n", tend_uvinit - tbegin_uvinit)
 
