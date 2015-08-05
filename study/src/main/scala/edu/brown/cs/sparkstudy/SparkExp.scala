@@ -50,10 +50,6 @@ object SparkExp {
     )
   }
 
-  def matrixMultiply_v2(rows: Int, cols: Int, u_mat: RDD[Array[Double]], v_mat: RDD[Array[Double]]): RDD[Array[Double]] = {
-    val product = u_mat.cartesian(v_mat).aggregateByKey(new ArrayBuffer[Double]())
-  }
-
   def scalarMultiplicationScala(array_size: Int, parallel: Int): Array[Double] = {
     val xs  = scalaParallelArray(array_size, parallel)
     val xs_scaled = xs.map(_ * 2.0)
