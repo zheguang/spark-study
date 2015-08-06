@@ -7,6 +7,13 @@ bench_root=$(dirname $0)/cfsgd
 func_mode="test"
 benchs=("cc" "java" "scala")
 
+function setup_java_opts {
+  dump_dir=/tmp/java
+  mkdir -p $dump_dir
+
+  export JAVA_OPTS="-server -XX:+HeapDumpOnOutOfMemoryError -XX:ErrorFile=$dump_dir/hs_err_pid.log -XX:HeapDumpPath=$dump_dir"
+}
+
 function show_help {
   echo "usage: bench-all.sh -m <test|result> -b <cc|java|scala>..."
 }
@@ -79,4 +86,5 @@ function main {
 }
 
 parse_args $@
+setup_java_opts
 main

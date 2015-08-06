@@ -6,6 +6,7 @@ my_bench=$(dirname $0)
 
 function setup() {
   echo "[INFO] set up"
+  echo "[info] java opts: $JAVA_OPTS"
   func_mode_=$1
   if [ $func_mode_ = "result" ]; then
     if [ -d $my_bench/result ]; then
@@ -23,19 +24,25 @@ function compile() {
 }
 
 function actual_bench_() {
-  exe_path_=edu.brown.cs.sparkstudy.ScalaSgd
-  >&2 echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
-  echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
-  scala -cp $fatJar $exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads 
-
-  exe_path_=edu.brown.cs.sparkstudy.BreezeSgd
-  >&2 echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
-  echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
-  scala -cp $fatJar $exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads 
+  if [ $mode = "scala" ]; then
+    exe_path_=edu.brown.cs.sparkstudy.ScalaSgd
+    >&2 echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
+    echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
+    scala -cp $fatJar $exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads 
+  elif [ $mode = "breeze" ]; then
+    exe_path_=edu.brown.cs.sparkstudy.BreezeSgd
+    >&2 echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
+    echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
+    scala -cp $fatJar $exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads 
+  else
+    >&2 echo "[error] unsupported mode: $mode"
+    exit 1
+  fi
 }
 
 function test_bench() {
   latent=$1
+  mode=$2
   fatJar=$root/target/scala-2.11/study-assembly-0.1-SNAPSHOT.jar
   datafile=$root/src/main/cc/ratings_u10_v9.dat
   nusers=1024
@@ -48,6 +55,7 @@ function test_bench() {
 
 function do_bench() {
   latent=$1
+  mode=$2
   fatJar=$root/target/scala-2.11/study-assembly-0.1-SNAPSHOT.jar
   datafile=/ext/research/graphmat/datasets/Rating_S20.train
   nusers=996994
@@ -58,7 +66,7 @@ function do_bench() {
   actual_bench_
 }
 
-modes=("scala")
+modes=("scala" "breeze")
 latents=("20" "200")
 
 func_mode="test"
@@ -75,7 +83,7 @@ echo "[info] start benchmark"
 for l in ${latents[@]}; do
   for m in ${modes[@]}; do
     #test_bench 20 1> $my_bench/test/ScalaSgd_l20.result
-    $func $l 1> $my_bench/$func_mode/ScalaSgd_l${l}_${m}.result
+    $func $l $m 1> $my_bench/$func_mode/ScalaSgd_l${l}_${m}.result
   done
 done
 echo "[info] end benchmark"
