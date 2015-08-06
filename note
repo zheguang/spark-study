@@ -103,3 +103,5 @@ gcc common.o ddottest.o -lblas -lm
 == run SparkSgd locally ==
 stop-all.sh && stop-history-server.sh && start-all.sh && start-history-server.sh
 sbt assembly && spark-submit --class edu.brown.cs.sparkstudy.SparkSgdNaive --master spark://ginchi:7077 --num-executors 2 target/scala-2.11/study-assembly-0.1-SNAPSHOT.jar 20 /devel/spark-study/study/bench/cfsgd/scala/../../../src/main/cc/ratings_u10_v9.dat 1024 512 524288 4 2>/tmp/samrun
+
+sbt assembly && spark-submit --class edu.brown.cs.sparkstudy.SparkSgdNaive target/scala-2.11/study-assembly-0.1-SNAPSHOT.jar 20 /home/user/sam/devel/spark-study/study/bench/cfsgd/scala/../../../src/main/cc/ratings_u10_v9.dat 1024 512 524288 4 2>/tmp/samrun
