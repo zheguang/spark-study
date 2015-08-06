@@ -205,8 +205,8 @@ object SparkSgdNaive extends Logging {
     println(s"[sam] usersBlocks size: ${usersBlocks.count()}, itemsBlocks size: ${itemsBlocks.count()}")
     //logInfo(s"[sam] usersBlocks parts: ${usersBlocks.partitions.length}, itemsBlocks parts: ${itemsBlocks.partitions.length}")
     println(s"[sam] finished training for total iterations: $maxNumIters")
-    /*val trainErr = computeTrainingError(usersBlocks, itemsBlocks, ratingsBlocks)
-    logInfo(s"sam, training rmse $trainErr")*/
+    val trainErr = computeTrainingError(usersBlocks, itemsBlocks, ratingsBlocks)
+    println(s"[sam] training rmse $trainErr")
   }
 
   def makeFactorsBlocks(userPart: HashPartitioner, itemPart: HashPartitioner, ratingsBlocks: RDD[((UsersBlockId, ItemsBlockId), RatingsBlock)], num_latent: Int): (RDD[(UsersBlockId, UsersBlock)], RDD[(ItemsBlockId, ItemsBlock)]) = {
