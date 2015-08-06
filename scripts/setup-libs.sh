@@ -110,6 +110,12 @@ function setupProtobufEnvVars {
   log "set up protobuf environment variables"
 }
 
+function installSbt {
+  echo "deb http://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list
+  apt-get update
+  apt-get install sbt
+}
+
 function main {
   installMaven3
   setupMaven3
@@ -117,6 +123,7 @@ function main {
   setupJava
   installScala
   setupScala
+  installSbt
 
   installHadoopDeps
   installPackages
