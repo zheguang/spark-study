@@ -46,6 +46,46 @@ object SparkSgdNaive extends Logging {
     }
   }
 
+  class UsersBlockBuilder(factorLength: Int) extends Serializable {
+    val users = mutable.ArrayBuilder.make[UserId]
+
+    def add(us: Array[UserId]): UsersBlockBuilder = {
+      users ++= us
+      this
+    }
+    
+    def merge(b: UsersBlock): UsersBlockBuilder = {
+      users ++= b.users
+      this
+    }
+    
+    def build(): UsersBlock = {
+      val uniqueUsers = users.result().toSet.toSeq.sorted.toArray
+      val factors = Array.fill(uniqueUsers.length, factorLength)(randGen.nextDouble())
+      UsersBlock(uniqueUsers, factors)
+    }
+  }
+  
+  class ItemsBlockBuilder(factorLength: Int) extends Serializable {
+    val items = mutable.ArrayBuilder.make[ItemId]
+
+    def add(us: Array[UserId]): ItemsBlockBuilder = {
+      items ++= us
+      this
+    }
+
+    def merge(b: ItemsBlock): ItemsBlockBuilder = {
+      items ++= b.items
+      this
+    }
+
+    def build(): ItemsBlock = {
+      val uniqueItems = items.result().toSet.toSeq.sorted.toArray
+      val factors = Array.fill(uniqueItems.length, factorLength)(randGen.nextDouble())
+      ItemsBlock(uniqueItems, factors)
+    }
+  }
+
   def main(args: Array[String]) = {
     if (args.length < argNames.length) {
       printUsage("SparkSgd")
@@ -69,6 +109,7 @@ object SparkSgdNaive extends Logging {
 
     val numUserBlocks = num_nodes * num_procs
     val numItemBlocks = num_nodes * num_procs
+    println(s"[sam] init: numUserBlocks: $numUserBlocks, numItemBlocks: $numItemBlocks")
 
     val userPart = new HashPartitioner(numUserBlocks)
     val itemPart = new HashPartitioner(numItemBlocks)
@@ -78,18 +119,19 @@ object SparkSgdNaive extends Logging {
     // materialize
     usersBlocks.count()
     itemsBlocks.count()
-    //logInfo(s"[sam] init: usersBlocks size: ${usersBlocks.count()}, itemsBlocks size: ${itemsBlocks.count()}")
+    println(s"[sam] init: ratingsblocks count: ${ratingsBlocks.count()}, usersBlocks count: ${usersBlocks.count()}, itemsBlocks count: ${itemsBlocks.count()}")
 
-    val maxNumIters = 1
+    val maxNumIters = 5
     val numDiagnalRounds = itemsBlocks.count().toInt
 
-    // XXX
     var gamma = 0.001
     for (iter <- 0 until maxNumIters) {
+      val iterStart = System.currentTimeMillis()
       for (round <- 0 until numDiagnalRounds) {
         val ratingsBlocksInRound = ratingsBlocks.filter {
           case ((usersBlockId, itemsBlockId), _) => (usersBlockId + round) % numDiagnalRounds == itemsBlockId
         }
+        //println(s"[sam] debug: ratingsBlocksInRound: count: ${ratingsBlocksInRound.count()}")
 
         // fixme: look up factors blocks by ratingsBlocksInRound?
         val uirBlocksInRound = usersBlocks.join(
@@ -102,6 +144,7 @@ object SparkSgdNaive extends Logging {
             // changing schema for the join with rating blocks to filter
             ((usersBlockId, itemsBlockId), (usersBlock, itemsBlock))
         }.join(ratingsBlocksInRound)
+        //println(s"[sam] debug: uirBlocksInRound: count: ${uirBlocksInRound.count()}")
 
         val uirBlocksInRoundUpdated = uirBlocksInRound.mapValues {
           case ((usersBlock, itemsBlock), ratingsBlock) =>
@@ -125,6 +168,7 @@ object SparkSgdNaive extends Logging {
             }
             (usersBlock, itemsBlock)
         }.persist(StorageLevel.MEMORY_AND_DISK)
+        //println(s"[sam] debug: uirBlocksInRoundUpdated: count: ${uirBlocksInRoundUpdated.count()}")
 
         // update usersBlocks and itemsBlocks with counterparts in uriBlocks
         // fixme: use look up filter and then merge to update usersBlocks and itemsBlocks?
@@ -151,105 +195,54 @@ object SparkSgdNaive extends Logging {
         // materialize
         usersBlocks.count()
         itemsBlocks.count()
-        //logInfo(s"[sam] at i$iter: usersBlocks size: ${usersBlocks.count()}, itemsBlocks size: ${itemsBlocks.count()}")
+        //println(s"[sam] at i$iter: usersBlocks size: ${usersBlocks.count()}, itemsBlocks size: ${itemsBlocks.count()}")
       }
-
-      // XXX
-
-      /*for (iter <- 0 until maxNumIters) {
-        var gamma = 0.001
-        for (round <- 0 until numDiagnalRounds) {
-          //val diagnalRoundBlocks = (0 until numDiagnalRounds).zip(0 until numDiagnalRounds map(x => (x + round) % numDiagnalRounds))
-          val ratingsBlocksInRound = ratingsBlocks.filter {
-            case ((usersBlockId, itemsBlockId), _) =>
-              (usersBlockId + round) % numDiagnalRounds == itemsBlockId
-          }
-
-          // Filter in the users/items/ratings that participate in this round
-          val uirBlocksInRound = usersBlocks.join(
-            itemsBlocks.map {
-              case (itemsBlockId, itemsBlock) =>
-                ((itemsBlockId + round) % numDiagnalRounds, (itemsBlockId, itemsBlock))
-            }, userPart
-          ).map {
-            case (usersBlockId, (usersBlock, (itemsBlockId, itemsBlock))) =>
-              // changing schema for the join with rating blocks to filter
-              ((usersBlockId, itemsBlockId), (usersBlock, itemsBlock))
-          }.join(ratingsBlocksInRound, userPart)
-
-          // update user and item factors using SGD
-          val uirBlocksInRoundUpdated = uirBlocksInRound.map {
-            case ((usersBlockId, itemsBlockId), ((usersBlock, itemsBlock), ratingsBlock)) =>
-              // Within one ratingsBlock, have to be sequential because of
-              // multiple write-read dependencies for each uesr and item factor
-              ratingsBlock.ratings.zipWithIndex.foreach {
-                case (rate, i) =>
-                  // todo: improve O(n) to O(1) lookup
-                  val userId = ratingsBlock.users(i)
-                  val itemId = ratingsBlock.items(i)
-                  val userFactorIndex = usersBlock.users.indexOf(userId)
-                  val itemFactorIndex = itemsBlock.items.indexOf(itemId)
-                  val userFactor = usersBlock.factors(userFactorIndex)
-                  val itemFactor = itemsBlock.factors(itemFactorIndex)
-                  val pred = dotP(num_latent, userFactor, 0, itemFactor, 0)
-                  val err = pred - rate
-                  (0 until num_latent).foreach { i =>
-                    userFactor(i) += - gamma * (err * itemFactor(i) + LAMBDA * userFactor(i))
-                    itemFactor(i) += - gamma * (err * userFactor(i) + LAMBDA * itemFactor(i))
-                  }
-              }
-              ((usersBlockId, itemsBlockId), ((usersBlock, itemsBlock), ratingsBlock))
-          }
-
-          // update usersBlocks and itemsBlocks with counterparts in uriBlocks
-          val previousUsersBlocks = usersBlocks
-          usersBlocks = uirBlocksInRoundUpdated.map {
-            case ((usersBlockId, _), ((usersBlock, _), _)) => (usersBlockId, usersBlock)
-          }.join(usersBlocks, userPart).map {
-            case ((usersBlockId, (usersBlockUpdated, usersBlock))) => (usersBlockId, usersBlockUpdated)
-          }.persist()
-          previousUsersBlocks.unpersist()
-
-          val previousItemsBlocks = itemsBlocks
-          itemsBlocks = uirBlocksInRoundUpdated.map {
-            case ((_, itemsBlockId), ((_, itemsBlock), _)) => (itemsBlockId, itemsBlock)
-          }.join(itemsBlocks, itemPart).map {
-            case ((itemsBlockId, (itemsBlockUpdated, itemsBlock))) => (itemsBlockId, itemsBlockUpdated)
-          }.persist()
-          previousItemsBlocks.unpersist()
-
-          // onward next round!
-        }
-        gamma *= STEP_DEC
-      }*/
       gamma *= STEP_DEC
-      /*val trainErr = computeTrainingError(usersBlocks, itemsBlocks, ratingsBlocks)
-      logInfo(s"sam, training rmse $trainErr")*/
+      val iterEnd = System.currentTimeMillis()
+      println(s"[sam] Time in iteration $iter of sgd ${iterEnd - iterStart} (ms)")
     }
 
-    logInfo(s"[sam] finished training for total iterations: $maxNumIters")
-
-    logInfo(s"[sam] usersBlocks size: ${usersBlocks.count()}, itemsBlocks size: ${itemsBlocks.count()}")
-    logInfo(s"[sam] usersBlocks parts: ${usersBlocks.partitions.length}, itemsBlocks parts: ${itemsBlocks.partitions.length}")
-
+    println(s"[sam] usersBlocks size: ${usersBlocks.count()}, itemsBlocks size: ${itemsBlocks.count()}")
+    //logInfo(s"[sam] usersBlocks parts: ${usersBlocks.partitions.length}, itemsBlocks parts: ${itemsBlocks.partitions.length}")
+    println(s"[sam] finished training for total iterations: $maxNumIters")
+    /*val trainErr = computeTrainingError(usersBlocks, itemsBlocks, ratingsBlocks)
+    logInfo(s"sam, training rmse $trainErr")*/
   }
 
   def makeFactorsBlocks(userPart: HashPartitioner, itemPart: HashPartitioner, ratingsBlocks: RDD[((UsersBlockId, ItemsBlockId), RatingsBlock)], num_latent: Int): (RDD[(UsersBlockId, UsersBlock)], RDD[(ItemsBlockId, ItemsBlock)]) = {
+    // fixme: fist should aggregate by usersBlockId to create a usersBlock
     val usersBlocks = ratingsBlocks.map {
+      case ((usersBlockId, _), RatingsBlock(users, _, _)) => (usersBlockId, users)
+    }.aggregateByKey(new UsersBlockBuilder(num_latent), new HashPartitioner(userPart.numPartitions))(
+        seqOp = (b, us) => b.add(us),
+        combOp = (b1, b2) => b1.merge(b2.build()))
+      .mapValues(_.build())
+      .setName("usersBlocks")
+      .persist(StorageLevel.MEMORY_AND_DISK)
+      /*val usersBlocks = ratingsBlocks.map {
       case ((usersBlockId, _), RatingsBlock(users_, _, _)) =>
         val users: Array[UsersBlockId] = users_.toSet.toSeq.sorted.toArray
         (usersBlockId, UsersBlock(users, Array.fill(users.length, num_latent)(randGen.nextDouble())))
     }.partitionBy(new HashPartitioner(userPart.numPartitions))
       .setName("usersBlock")
-      .persist(StorageLevel.MEMORY_AND_DISK)
+      .persist(StorageLevel.MEMORY_AND_DISK)*/
 
+    // fixme: fist should aggregate by itemsBlockId to create an itemsBlock
     val itemsBlocks = ratingsBlocks.map {
+      case ((_, itemsBlockId), RatingsBlock(_, items, _)) => (itemsBlockId, items)
+    }.aggregateByKey(new ItemsBlockBuilder(num_latent), new HashPartitioner(itemPart.numPartitions))(
+        seqOp = (b, is) => b.add(is),
+        combOp = (b1, b2) => b1.merge(b2.build()))
+      .mapValues(_.build())
+      .setName("itemsBlocks")
+      .persist(StorageLevel.MEMORY_AND_DISK)
+    /*val itemsBlocks = ratingsBlocks.map {
       case ((_, itemsBlockId), RatingsBlock(_, items_, _)) =>
         val items = items_.toSet.toSeq.sorted.toArray
         (itemsBlockId, ItemsBlock(items, Array.fill(items.length, num_latent)(randGen.nextDouble())))
     }.partitionBy(new HashPartitioner(itemPart.numPartitions))
       .setName("itemsBlock")
-      .persist(StorageLevel.MEMORY_AND_DISK)
+      .persist(StorageLevel.MEMORY_AND_DISK)*/
 
     (usersBlocks, itemsBlocks)
   }
