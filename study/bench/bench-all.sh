@@ -5,7 +5,7 @@ set -e
 bench_root=$(dirname $0)/cfsgd
 
 func_mode="test"
-benchs=("cc" "java" "scala")
+benchs=("cc" "java" "scala" "spark")
 
 function setup_java_opts {
   dump_dir=/tmp/java
@@ -15,7 +15,7 @@ function setup_java_opts {
 }
 
 function show_help {
-  echo "usage: bench-all.sh -m <test|result> -b <cc|java|scala>..."
+  echo "usage: bench-all.sh -m <test|result> -b <cc|java|scala|spark>..."
 }
 
 function parse_args {
