@@ -66,6 +66,8 @@ function main {
   setupSpark
 
   setupEnvVars
+
+  /bin/bash $PROJECT/scripts/update-spark-conf.sh ginchi
 }
 
 main $@
