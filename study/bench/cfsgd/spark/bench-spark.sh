@@ -23,10 +23,10 @@ function compile() {
 }
 
 function actual_bench_() {
-  exe_path_=edu.brown.cs.sparkstudy.SparkSgdNaive
+  exe_path_=edu.brown.cs.sparkstudy.SparkSgdIndexed
   >&2 echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
   echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
-  /usr/local/spark/bin/spark-submit --name bench-$func_mode-SparkSgdNaive --class $exe_path_ $fatJar $latent $datafile $nusers $nmovies $nratings $nthreads 2>/tmp/samrun
+  /usr/local/spark/bin/spark-submit --name bench-$func_mode-SparkSgdIndexed --class $exe_path_ $fatJar $latent $datafile $nusers $nmovies $nratings $nthreads 2>/tmp/samrun
   if [ $? -gt 0 ]; then
     echo "[error] execution error"
     cat /tmp/samrun
@@ -72,6 +72,6 @@ compile
 
 echo "[info] start benchmark"
 for l in ${latents[@]}; do
-  $func $l 1> $my_bench/$func_mode/SparkSgdNaive_l${l}.result
+  $func $l 1> $my_bench/$func_mode/SparkSgdIndexed_l${l}.result
 done
 echo "[info] end benchmark"
