@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-root=$(readlink -f `dirname $0`)/../../..
+study=$(readlink -f `dirname $0`)/../../..
 my_bench=$(dirname $0)
 
 #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH
@@ -30,14 +30,14 @@ function setup() {
 
 function compile() {
   echo "[INFO] compile"
-  (cd $root && sbt assembly)
+  (cd $study && sbt assembly)
 }
 
 function test_bench() {
   latent=$1
   mode=$2
-  fatJar=$root/target/scala-2.11/study-assembly-0.1-SNAPSHOT.jar
-  datafile=$root/src/main/cc/ratings_u10_v9.dat
+  fatJar=$study/target/scala-2.11/study-assembly-0.1-SNAPSHOT.jar
+  datafile=$study/src/main/cc/ratings_u10_v9.dat
   nusers=1024
   nmovies=512
   nratings=524288
@@ -57,8 +57,8 @@ function test_bench() {
 function do_bench() { 
   latent=$1
   mode=$2
-  fatJar=$root/target/scala-2.11/study-assembly-0.1-SNAPSHOT.jar
-  datafile=/ext/research/graphmat/datasets/Rating_S20.train
+  fatJar=$study/target/scala-2.11/study-assembly-0.1-SNAPSHOT.jar
+  datafile=/data/devel/research/sam/Rating_S20.train
   nusers=996994
   nmovies=20972
   nratings=248944185

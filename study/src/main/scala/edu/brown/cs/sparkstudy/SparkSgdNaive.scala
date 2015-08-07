@@ -14,7 +14,7 @@ object SparkSgdNaive extends Logging {
       printUsage("SparkSgd")
       System.exit(123)
     }
-    val sc = new SparkContext(new SparkConf().setAppName("ScalaSgdNaive"))
+    val sc = new SparkContext(new SparkConf())
 
     val num_latent = args(0).toInt
     val filePath = args(1)
