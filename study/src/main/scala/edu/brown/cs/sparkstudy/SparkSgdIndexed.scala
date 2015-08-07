@@ -7,14 +7,14 @@ import org.apache.spark.{Logging, SparkConf, SparkContext, HashPartitioner}
 
 import scala.collection.mutable
 
-object SparkSgdNaive extends Logging {
+object SparkSgdIndexed extends Logging {
 
   def main(args: Array[String]) = {
     if (args.length < argNames.length) {
       printUsage("SparkSgd")
       System.exit(123)
     }
-    val sc = new SparkContext(new SparkConf())
+    val sc = new SparkContext(new SparkConf().setAppName("ScalaSgdNaive"))
 
     val num_latent = args(0).toInt
     val filePath = args(1)
@@ -69,18 +69,13 @@ object SparkSgdNaive extends Logging {
         }.join(ratingsBlocksInRound)
 
         val uirBlocksInRoundUpdated = uirBlocksInRound.mapValues {
-          case ((usersBlock, itemsBlock), ratingsBlock) =>
+          case ((usersBlock, itemsBlock), RatingsBlock(_, _, rates, usersIndex, itemsIndex)) =>
             // Within one ratingsBlock, have to be sequential because of
             // multiple write-read dependencies for each uesr and item factor
-            ratingsBlock.ratings.zipWithIndex.foreach {
+            rates.zipWithIndex.foreach {
               case (rate, i) =>
-                // todo: improve O(log n) to O(1) reverse lookup factors
-                val userId = ratingsBlock.users(i)
-                val itemId = ratingsBlock.items(i)
-                val userFactorIndex = usersBlock.users.indexOf(userId)
-                val itemFactorIndex = itemsBlock.items.indexOf(itemId)
-                val userFactor = usersBlock.factors(userFactorIndex)
-                val itemFactor = itemsBlock.factors(itemFactorIndex)
+                val userFactor = usersBlock.factors(usersIndex(i))
+                val itemFactor = itemsBlock.factors(itemsIndex(i))
                 val pred = dotP(num_latent, userFactor, 0, itemFactor, 0)
                 val err = pred - rate
                 (0 until num_latent).foreach { j =>
@@ -89,7 +84,7 @@ object SparkSgdNaive extends Logging {
                 }
             }
             (usersBlock, itemsBlock)
-        }.persist(StorageLevel.MEMORY_AND_DISK)
+        }.persist(StorageLevel.MEMORY_ONLY)
 
         // update usersBlocks and itemsBlocks with counterparts in uriBlocks
         val previousUsersBlocks = usersBlocks
@@ -100,7 +95,7 @@ object SparkSgdNaive extends Logging {
           case (None, usersBlock) => usersBlock
         }
         previousUsersBlocks.unpersist()
-        usersBlocks.setName(s"usersBlocks(i$iter)(r$round)").persist(StorageLevel.MEMORY_AND_DISK)
+        usersBlocks.setName(s"usersBlocks(i$iter)(r$round)").persist(StorageLevel.MEMORY_ONLY)
 
         val previousItemsBlocks = itemsBlocks
         itemsBlocks = uirBlocksInRoundUpdated.map {
@@ -110,7 +105,7 @@ object SparkSgdNaive extends Logging {
           case (None, itemsBlock) => itemsBlock
         }
         previousItemsBlocks.unpersist()
-        itemsBlocks.setName(s"itemsBlocks(i$iter(r$round)").persist(StorageLevel.MEMORY_AND_DISK)
+        itemsBlocks.setName(s"itemsBlocks(i$iter(r$round)").persist(StorageLevel.MEMORY_ONLY)
 
         // materialize
         usersBlocks.count()
@@ -132,24 +127,24 @@ object SparkSgdNaive extends Logging {
     // aggregate by user-block ids to create user blocks, each with unique user
     // ids that are shared across different item blocks
     val usersBlocks = ratingsBlocks.map {
-      case ((usersBlockId, _), RatingsBlock(users, _, _)) => (usersBlockId, users)
+      case ((usersBlockId, _), RatingsBlock(users, _, _, _, _)) => (usersBlockId, users)
     }.aggregateByKey(new UsersBlockBuilder(num_latent), new HashPartitioner(userPart.numPartitions))(
         seqOp = (b, us) => b.add(us),
         combOp = (b1, b2) => b1.merge(b2.build()))
       .mapValues(_.build())
       .setName("usersBlocks")
-      .persist(StorageLevel.MEMORY_AND_DISK)
+      .persist(StorageLevel.MEMORY_ONLY)
 
     // aggregate by item-block ids to create item blocks, each with unique
     // item ids that are shared acrosss different user blocks
     val itemsBlocks = ratingsBlocks.map {
-      case ((_, itemsBlockId), RatingsBlock(_, items, _)) => (itemsBlockId, items)
+      case ((_, itemsBlockId), RatingsBlock(_, items, _, _, _)) => (itemsBlockId, items)
     }.aggregateByKey(new ItemsBlockBuilder(num_latent), new HashPartitioner(itemPart.numPartitions))(
         seqOp = (b, is) => b.add(is),
         combOp = (b1, b2) => b1.merge(b2.build()))
       .mapValues(_.build())
       .setName("itemsBlocks")
-      .persist(StorageLevel.MEMORY_AND_DISK)
+      .persist(StorageLevel.MEMORY_ONLY)
 
     (usersBlocks, itemsBlocks)
   }
@@ -162,7 +157,7 @@ object SparkSgdNaive extends Logging {
         combOp = (b1, b2) => b1.merge(b2.build()))
       .mapValues(_.build())
       .setName("ratingsBlock")
-      .persist(StorageLevel.MEMORY_AND_DISK)
+      .persist(StorageLevel.MEMORY_ONLY)
   }
 
   private def computeTrainingError(usersBlocks: RDD[(UsersBlockId, UsersBlock)], itemsBlocks: RDD[(ItemsBlockId, ItemsBlock)], ratingsBlocks: RDD[((UsersBlockId, ItemsBlockId), RatingsBlock)]): Double = {
@@ -170,18 +165,13 @@ object SparkSgdNaive extends Logging {
     val itemsBlockMap = itemsBlocks.collectAsMap()
 
     val sumSquaredDev = ratingsBlocks.map {
-      case ((usersBlockId, itemsBlockId), ratingsBlock) =>
+      case ((usersBlockId, itemsBlockId), RatingsBlock(_, _, rates, usersIndex, itemsIndex)) =>
         val usersBlock = usersBlockMap(usersBlockId)
         val itemsBlock = itemsBlockMap(itemsBlockId)
-        ratingsBlock.ratings.zipWithIndex.map {
+        rates.zipWithIndex.map {
           case (rate, i) =>
-            // todo: improve O(n) to O(1) lookup
-            val userId = ratingsBlock.users(i)
-            val itemId = ratingsBlock.items(i)
-            val userFactorIndex = usersBlock.users.indexOf(userId)
-            val itemFactorIndex = itemsBlock.items.indexOf(itemId)
-            val userFactor = usersBlock.factors(userFactorIndex)
-            val itemFactor = itemsBlock.factors(itemFactorIndex)
+            val userFactor = usersBlock.factors(usersIndex(i))
+            val itemFactor = itemsBlock.factors(itemsIndex(i))
             val pred = dotP(userFactor.length, userFactor, 0, itemFactor, 0)
             Math.pow(pred - rate, 2)
         }.sum
@@ -201,7 +191,8 @@ object SparkSgdNaive extends Logging {
   type ItemsBlockId = Int
 
   case class Rating(user: UserId, item: ItemId, rating: Double) extends Serializable
-  case class RatingsBlock(users: Array[UserId], items: Array[ItemId], ratings: Array[Double]) extends Serializable
+  case class RatingsBlock(users: Array[UserId], items: Array[ItemId], ratings: Array[Double], usersIndex: Array[Int], itemsIndex: Array[Int]) extends Serializable
+  //case class RatingsBlockNormalized(ratings: Array[Double], usersIndex: Array[Int], itemsIndex: Array[Int]) extends Serializable
   case class UsersBlock(users: Array[UserId], factors: Array[Array[Double]]) extends Serializable
   case class ItemsBlock(items: Array[ItemId], factors: Array[Array[Double]]) extends Serializable
 
@@ -225,7 +216,20 @@ object SparkSgdNaive extends Logging {
     }
 
     def build(): RatingsBlock = {
-      RatingsBlock(users.result(), items.result(), ratings.result())
+      val rs = ratings.result()
+      val us = users.result()
+      val is = items.result()
+      val uniqueUsers = us.toSet.toSeq.sorted.toArray
+      val uniqueItems = is.toSet.toSeq.sorted.toArray
+      val usersIndex = mutable.ArrayBuilder.make[Int]
+      val itemsIndex = mutable.ArrayBuilder.make[Int]
+      rs.zipWithIndex.foreach { case (r, i) =>
+        val userId = us(i)
+        val itemId = is(i)
+        usersIndex += uniqueUsers.indexOf(userId)
+        itemsIndex += uniqueItems.indexOf(itemId)
+      }
+      RatingsBlock(users.result(), items.result(), ratings.result(), usersIndex.result(), itemsIndex.result())
     }
   }
 
@@ -269,3 +273,4 @@ object SparkSgdNaive extends Logging {
     }
   }
 }
+
