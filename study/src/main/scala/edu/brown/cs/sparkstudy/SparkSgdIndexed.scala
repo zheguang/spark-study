@@ -32,7 +32,7 @@ object SparkSgdIndexed extends Logging {
 
     val numUserBlocks = num_nodes * num_procs
     val numItemBlocks = num_nodes * num_procs
-    println(s"[sam] init: ratings count: ${ratings.count()}, numUserBlocks: $numUserBlocks, numItemBlocks: $numItemBlocks")
+    //println(s"[sam] init: ratings count: ${ratings.count()}, numUserBlocks: $numUserBlocks, numItemBlocks: $numItemBlocks")
 
     val userPart = new HashPartitioner(numUserBlocks)
     val itemPart = new HashPartitioner(numItemBlocks)
@@ -40,14 +40,14 @@ object SparkSgdIndexed extends Logging {
     val (ratingsBlocksDenormalized, ratingsBlocksNormalized) = partitionRatings(ratings, userPart, itemPart)
     var (usersBlocks, itemsBlocks) = makeFactorsBlocks(userPart, itemPart, ratingsBlocksDenormalized, num_latent)
     // materialize
-    usersBlocks.count()
-    itemsBlocks.count()
-    ratingsBlocksNormalized.count()
+    //usersBlocks.count()
+    //itemsBlocks.count()
+    //ratingsBlocksNormalized.count()
     ratingsBlocksDenormalized.unpersist()
 
     val ratingsBlocks = ratingsBlocksNormalized
-    println(s"[sam] init: ratingsblocks count: ${ratingsBlocks.count()}, usersBlocks count: ${usersBlocks.count()}, itemsBlocks count: ${itemsBlocks.count()}")
-    println(s"[sam] init: numUsers: ${usersBlocks.mapValues(_.users.length).values.sum()}, numItems: ${itemsBlocks.mapValues(_.items.length).values.sum()}")
+    //println(s"[sam] init: ratingsblocks count: ${ratingsBlocks.count()}, usersBlocks count: ${usersBlocks.count()}, itemsBlocks count: ${itemsBlocks.count()}")
+    //println(s"[sam] init: numUsers: ${usersBlocks.mapValues(_.users.length).values.sum()}, numItems: ${itemsBlocks.mapValues(_.items.length).values.sum()}")
 
     val maxNumIters = 5
     val numDiagnalRounds = itemsBlocks.count().toInt
@@ -111,16 +111,16 @@ object SparkSgdIndexed extends Logging {
         itemsBlocks.setName(s"itemsBlocks(i$iter(r$round)").persist(StorageLevel.MEMORY_ONLY)
 
         // materialize
-        usersBlocks.count()
-        itemsBlocks.count()
+        //usersBlocks.count()
+        //itemsBlocks.count()
       }
       gamma *= STEP_DEC
       val iterEnd = System.currentTimeMillis()
       println(s"[sam] Time in iteration $iter of sgd ${iterEnd - iterStart} (ms)")
     }
 
-    logInfo(s"[sam] usersBlocks size: ${usersBlocks.count()}, itemsBlocks size: ${itemsBlocks.count()}")
-    logInfo(s"[sam] usersBlocks parts: ${usersBlocks.partitions.length}, itemsBlocks parts: ${itemsBlocks.partitions.length}")
+    //logInfo(s"[sam] usersBlocks size: ${usersBlocks.count()}, itemsBlocks size: ${itemsBlocks.count()}")
+    //logInfo(s"[sam] usersBlocks parts: ${usersBlocks.partitions.length}, itemsBlocks parts: ${itemsBlocks.partitions.length}")
     println(s"[sam] finished training for total iterations: $maxNumIters")
     val trainErr = computeTrainingError(usersBlocks, itemsBlocks, ratingsBlocks)
     println(s"[sam] training rmse $trainErr")
