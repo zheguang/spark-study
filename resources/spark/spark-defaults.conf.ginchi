@@ -17,3 +17,4 @@ spark.driver.memory               1g
 spark.executor.extraJavaOptions    -XX:+PrintGCDetails
 spark.executor.cores              1
 spark.executor.memory             2g
+spark.shuffle.spill               false
