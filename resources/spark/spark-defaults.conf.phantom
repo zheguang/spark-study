@@ -14,4 +14,6 @@ spark.eventLog.enabled            true
 spark.eventLog.dir                file:///var/spark/eventLog
 spark.serializer                  org.apache.spark.serializer.KryoSerializer
 spark.driver.memory               5g
-park.executor.extraJavaOptions    -XX:+PrintGCDetails
+spark.executor.extraJavaOptions    -XX:+PrintGCDetails
+spark.executor.cores              12
+spark.executor.memory             32g
