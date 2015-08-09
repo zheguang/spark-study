@@ -173,8 +173,11 @@ object SparkSgdIndexed extends Logging {
       .persist(StorageLevel.MEMORY_ONLY)
 
     val normalized = denormalized.mapValues { case RatingsBlockDenormalized(us, is, rs) =>
+      val start = System.currentTimeMillis()
+      println(s"[sam][debug] start to sort: users size: ${us.length}, items size: ${is.length}")
       val uniqueUsers = us.toSet.toSeq.sorted.toArray
       val uniqueItems = is.toSet.toSeq.sorted.toArray
+      println(s"[sam][debug] end sort, start zip: uniqueUsers size: ${uniqueUsers.length}, uniqueItems size: ${uniqueItems.length}, time: ${System.currentTimeMillis() - start}")
       val usersIndex = mutable.ArrayBuilder.make[Int]
       val itemsIndex = mutable.ArrayBuilder.make[Int]
       rs.zipWithIndex.foreach { case (_, i) =>
@@ -199,10 +202,12 @@ object SparkSgdIndexed extends Logging {
         itemsIndex += itemIdIndex
         i += 1
       }*/
+      println(s"[sam] done building one normalized rating block")
       RatingsBlockNormalized(rs, usersIndex.result(), itemsIndex.result())
     }
       .setName("ratingsBlocksNormalized")
       .persist(StorageLevel.MEMORY_ONLY)
+    println("[sam][debug] done making normalized block")
 
     (denormalized, normalized)
   }
