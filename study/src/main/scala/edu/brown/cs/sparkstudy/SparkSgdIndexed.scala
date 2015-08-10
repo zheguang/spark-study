@@ -38,20 +38,15 @@ object SparkSgdIndexed extends Logging {
     val itemPart = new HashPartitioner(numItemBlocks)
 
     //val (ratingsBlocksDenormalized, ratingsBlocksNormalized) = partitionRatings(ratings, userPart, itemPart)
-    val ratingsBlocksDenormalized = partitionRatings(ratings, userPart, itemPart)
-    var (usersBlocks, itemsBlocks) = makeFactorsBlocks(userPart, itemPart, ratingsBlocksDenormalized, num_latent)
+    val ratingsBlocks = partitionRatings(ratings, userPart, itemPart)
+    var (usersBlocks, itemsBlocks) = makeFactorsBlocks(userPart, itemPart, ratingsBlocks, num_latent)
     // materialize
     usersBlocks.count()
     itemsBlocks.count()
-    //ratingsBlocksNormalized.count()
-    //ratingsBlocksDenormalized.unpersist()
-
-    //val ratingsBlocks = ratingsBlocksNormalized
-    val ratingsBlocks = ratingsBlocksDenormalized
     //println(s"[sam] init: ratingsblocks count: ${ratingsBlocks.count()}, usersBlocks count: ${usersBlocks.count()}, itemsBlocks count: ${itemsBlocks.count()}")
     //println(s"[sam] init: numUsers: ${usersBlocks.mapValues(_.users.length).values.sum()}, numItems: ${itemsBlocks.mapValues(_.items.length).values.sum()}")
 
-    val maxNumIters = 2
+    val maxNumIters = 5
     val numDiagnalRounds = itemsBlocks.count().toInt
 
     var gamma = 0.001
@@ -76,7 +71,7 @@ object SparkSgdIndexed extends Logging {
         //println(s"[sam] uirBlocksInRound count: ${uirBlocksInRound.count()}")
 
         val uirBlocksInRoundUpdated = uirBlocksInRound.mapValues {
-          case ((usersBlock, itemsBlock), RatingsBlockDenormalized(users, items, rates)) =>
+          case ((usersBlock, itemsBlock), RatingsBlock(users, items, rates)) =>
             // Within one ratingsBlock, have to be sequential because of
             // multiple write-read dependencies for each uesr and item factor
             var i = 0
@@ -108,12 +103,6 @@ object SparkSgdIndexed extends Logging {
 
         // update usersBlocks and itemsBlocks with counterparts in uriBlocks
         val previousUsersBlocks = usersBlocks
-        /*usersBlocks = uirBlocksInRoundUpdated.map {
-          case ((usersBlockId, _), (usersBlock, _)) => (usersBlockId, usersBlock)
-        }.rightOuterJoin(usersBlocks).mapValues {
-          case ((Some(usersBlockUpdated), _)) => usersBlockUpdated
-          case (None, usersBlock) => usersBlock
-        }*/
         usersBlocks = uirBlocksInRoundUpdated.map { // todo: keyBy and then mapValues?
           case ((usersBlockId, _), (usersBlock, _)) => (usersBlockId, usersBlock)
         } //.partitionBy(new HashPartitioner(userPart.numPartitions))
@@ -121,12 +110,6 @@ object SparkSgdIndexed extends Logging {
         usersBlocks.setName(s"usersBlocks(i$iter)(r$round)").persist(StorageLevel.MEMORY_ONLY)
 
         val previousItemsBlocks = itemsBlocks
-        /*itemsBlocks = uirBlocksInRoundUpdated.map {
-          case ((_, itemsBlockId), (_, itemsBlock)) => (itemsBlockId, itemsBlock)
-        }.rightOuterJoin(itemsBlocks).mapValues {
-          case ((Some(itemsBlockUpdated), _)) => itemsBlockUpdated
-          case (None, itemsBlock) => itemsBlock
-        }*/
         itemsBlocks = uirBlocksInRoundUpdated.map {
           case ((_, itemsBlockId), (_, itemsBlock)) => (itemsBlockId, itemsBlock)
         } //.partitionBy(new HashPartitioner(itemPart.numPartitions))
@@ -134,7 +117,6 @@ object SparkSgdIndexed extends Logging {
         itemsBlocks.setName(s"itemsBlocks(i$iter(r$round)").persist(StorageLevel.MEMORY_ONLY)
 
         // materialize
-        // todo: broadcast?
         usersBlocks.count()
         itemsBlocks.count()
         //println(s"[sam] usersBlocks count: ${usersBlocks.count()}, itemsBlocks coutn: ${itemsBlocks.count()}")
@@ -154,11 +136,11 @@ object SparkSgdIndexed extends Logging {
     println(s"[sam] finished training for total iterations: $maxNumIters")
   }
 
-  private def makeFactorsBlocks(userPart: HashPartitioner, itemPart: HashPartitioner, ratingsBlocks: RDD[((UsersBlockId, ItemsBlockId), RatingsBlockDenormalized)], num_latent: Int): (RDD[(UsersBlockId, UsersBlock)], RDD[(ItemsBlockId, ItemsBlock)]) = {
+  private def makeFactorsBlocks(userPart: HashPartitioner, itemPart: HashPartitioner, ratingsBlocks: RDD[((UsersBlockId, ItemsBlockId), RatingsBlock)], num_latent: Int): (RDD[(UsersBlockId, UsersBlock)], RDD[(ItemsBlockId, ItemsBlock)]) = {
     // aggregate by user-block ids to create user blocks, each with unique user
     // ids that are shared across different item blocks
     val usersBlocks = ratingsBlocks.map {
-      case ((usersBlockId, _), RatingsBlockDenormalized(users, _, _)) => (usersBlockId, users)
+      case ((usersBlockId, _), RatingsBlock(users, _, _)) => (usersBlockId, users)
     }.aggregateByKey(new UsersBlockBuilder(num_latent), new HashPartitioner(userPart.numPartitions))(
         seqOp = (b, us) => b.add(us),
         combOp = (b1, b2) => b1.merge(b2.build()))
@@ -169,7 +151,7 @@ object SparkSgdIndexed extends Logging {
     // aggregate by item-block ids to create item blocks, each with unique
     // item ids that are shared acrosss different user blocks
     val itemsBlocks = ratingsBlocks.map {
-      case ((_, itemsBlockId), RatingsBlockDenormalized(_, items, _)) => (itemsBlockId, items)
+      case ((_, itemsBlockId), RatingsBlock(_, items, _)) => (itemsBlockId, items)
     }.aggregateByKey(new ItemsBlockBuilder(num_latent), new HashPartitioner(itemPart.numPartitions))(
         seqOp = (b, is) => b.add(is),
         combOp = (b1, b2) => b1.merge(b2.build()))
@@ -181,8 +163,8 @@ object SparkSgdIndexed extends Logging {
   }
 
   //private def partitionRatings(ratings: RDD[Rating], userPart: HashPartitioner, itemPart: HashPartitioner): (RDD[((UsersBlockId, ItemsBlockId), RatingsBlockDenormalized)], RDD[((UsersBlockId, ItemsBlockId), RatingsBlockNormalized)]) = {
-  private def partitionRatings(ratings: RDD[Rating], userPart: HashPartitioner, itemPart: HashPartitioner): RDD[((UsersBlockId, ItemsBlockId), RatingsBlockDenormalized)] = {
-    val denormalized = ratings.map { r =>
+  private def partitionRatings(ratings: RDD[Rating], userPart: HashPartitioner, itemPart: HashPartitioner): RDD[((UsersBlockId, ItemsBlockId), RatingsBlock)] = {
+    ratings.map { r =>
       ((userPart.getPartition(r.user), itemPart.getPartition(r.item)), r)
     }.aggregateByKey(new RatingsBlockDenormalizedBuilder)(
         seqOp = (b, r) => b.add(r),
@@ -190,89 +172,15 @@ object SparkSgdIndexed extends Logging {
       .mapValues(_.build())
       .setName("ratingsBlockDenormalized")
       .persist(StorageLevel.MEMORY_ONLY)
-
-    /*val normalized = denormalized.mapPartitions { denormalizedBlocks =>
-      denormalizedBlocks.map { case (blockId, RatingsBlockDenormalized(us, is, rs)) =>
-        val start = System.currentTimeMillis()
-        println(s"[sam][debug] start to sort: users size: ${us.length}, items size: ${is.length}")
-        val uniqueUsers = us.toSet.toSeq.sorted //.toArray
-        val uniqueItems = is.toSet.toSeq.sorted //.toArray
-        println(s"[sam][debug] end sort, start zip: uniqueUsers size: ${uniqueUsers.length}, uniqueItems size: ${uniqueItems.length}, time: ${System.currentTimeMillis() - start}")
-        /*rs.zipWithIndex.foreach { case (_, i) =>
-          val userId = us(i)
-          val itemId = is(i)
-          val userIdIndex = uniqueUsers.indexOf(userId)
-          val itemIdIndex = uniqueItems.indexOf(itemId)
-          assert(userIdIndex >= 0)
-          assert(itemIdIndex >= 0)
-          usersIndex += userIdIndex
-          itemsIndex += itemIdIndex
-        }*/
-        var i = 0
-        while (i < rs.length) {
-          us(i) = uniqueUsers.indexOf(us(i))
-          is(i) = uniqueItems.indexOf(is(i))
-          i += 1
-          if (i == 1 || i == rs.length) {
-            println(s"[sam][debug] done iter $i out of ${rs.length}")
-          }
-        }
-
-        println(s"[sam] done building one normalized rating block")
-        (blockId, RatingsBlockNormalized(rs, us, is))
-      }
-    }.setName("ratingsBlocksNormalized")
-      .persist(StorageLevel.MEMORY_ONLY)
-    println("[sam][debug] done making normalized block")*/
-
-    /*val normalized = denormalized.mapValues { case RatingsBlockDenormalized(us, is, rs) =>
-      val start = System.currentTimeMillis()
-      println(s"[sam][debug] start to sort: users size: ${us.length}, items size: ${is.length}")
-      val uniqueUsers = us.toSet.toSeq.sorted.toArray
-      val uniqueItems = is.toSet.toSeq.sorted.toArray
-      println(s"[sam][debug] end sort, start zip: uniqueUsers size: ${uniqueUsers.length}, uniqueItems size: ${uniqueItems.length}, time: ${System.currentTimeMillis() - start}")
-      val usersIndex = mutable.ArrayBuilder.make[Int]
-      val itemsIndex = mutable.ArrayBuilder.make[Int]
-      rs.zipWithIndex.foreach { case (_, i) =>
-        val userId = us(i)
-        val itemId = is(i)
-        val userIdIndex = uniqueUsers.indexOf(userId)
-        val itemIdIndex = uniqueItems.indexOf(itemId)
-        assert(userIdIndex >= 0)
-        assert(itemIdIndex >= 0)
-        usersIndex += userIdIndex
-        itemsIndex += itemIdIndex
-      }
-      /*var i = 0
-      while (i < rs.length) {
-        val userId = us(i)
-        val itemId = is(i)
-        val userIdIndex = uniqueUsers.indexOf(userId)
-        val itemIdIndex = uniqueItems.indexOf(itemId)
-        assert(userIdIndex >= 0)
-        assert(itemIdIndex >= 0)
-        usersIndex += userIdIndex
-        itemsIndex += itemIdIndex
-        i += 1
-      }*/
-      println(s"[sam] done building one normalized rating block")
-      RatingsBlockNormalized(rs, usersIndex.result(), itemsIndex.result())
-    }
-      .setName("ratingsBlocksNormalized")
-      .persist(StorageLevel.MEMORY_ONLY)
-    println("[sam][debug] done making normalized block")*/
-
-    //(denormalized, normalized)
-    denormalized
   }
 
   //private def computeTrainingError(usersBlocks: RDD[(UsersBlockId, UsersBlock)], itemsBlocks: RDD[(ItemsBlockId, ItemsBlock)], ratingsBlocks: RDD[((UsersBlockId, ItemsBlockId), RatingsBlockNormalized)]): Double = {
-  private def computeTrainingError(usersBlocks: RDD[(UsersBlockId, UsersBlock)], itemsBlocks: RDD[(ItemsBlockId, ItemsBlock)], ratingsBlocks: RDD[((UsersBlockId, ItemsBlockId), RatingsBlockDenormalized)]): Double = {
-    val usersBlockMap = usersBlocks.collectAsMap()
+  private def computeTrainingError(usersBlocks: RDD[(UsersBlockId, UsersBlock)], itemsBlocks: RDD[(ItemsBlockId, ItemsBlock)], ratingsBlocks: RDD[((UsersBlockId, ItemsBlockId), RatingsBlock)]): Double = {
+    /*val usersBlockMap = usersBlocks.collectAsMap()
     val itemsBlockMap = itemsBlocks.collectAsMap()
 
     val sumSquaredDev = ratingsBlocks.map {
-      case ((usersBlockId, itemsBlockId), RatingsBlockDenormalized(users, items, rates)) =>
+      case ((usersBlockId, itemsBlockId), RatingsBlock(users, items, rates)) =>
         val usersBlock = usersBlockMap(usersBlockId)
         val itemsBlock = itemsBlockMap(itemsBlockId)
         rates.zipWithIndex.map {
@@ -289,7 +197,53 @@ object SparkSgdIndexed extends Logging {
         ratingsBlock.ratings.length
     }.sum()
 
-    Math.sqrt(sumSquaredDev / numRatings)
+    Math.sqrt(sumSquaredDev / numRatings)*/
+
+    val numDiagnalRounds = itemsBlocks.count().toInt
+    val sumSquaredDevs = 0 until numDiagnalRounds map { round =>
+      val ratingsBlocksInRound = ratingsBlocks.filter {
+        case ((usersBlockId, itemsBlockId), _) => (usersBlockId + round) % numDiagnalRounds == itemsBlockId
+      }
+      val uirBlocksInRound = usersBlocks.join(
+        itemsBlocks.keyBy { case (itemsBlockId, _) =>
+          (itemsBlockId + round * (numDiagnalRounds - 1)) % numDiagnalRounds
+        }
+      ).map { // todo: keyBy, join and then mapValues?
+        case (usersBlockId, (usersBlock, (itemsBlockId, itemsBlock))) =>
+          // changing schema for the join with rating blocks to filter
+          ((usersBlockId, itemsBlockId), (usersBlock, itemsBlock))
+      }.join(ratingsBlocksInRound)
+      //println(s"[sam] uirBlocksInRound count: ${uirBlocksInRound.count()}")
+
+      uirBlocksInRound.mapValues {
+        case ((usersBlock, itemsBlock), RatingsBlock(users, items, rates)) =>
+          // Within one ratingsBlock, have to be sequential because of
+          // multiple write-read dependencies for each uesr and item factor
+          var i = 0
+          var sumSquaredDev = 0.0
+          while (i < rates.length) {
+            val userFactor = usersBlock.factors(usersBlock.users(users(i)))
+            val itemFactor = itemsBlock.factors(itemsBlock.items(items(i)))
+            val pred = dotP(userFactor.length, userFactor, 0, itemFactor, 0)
+            sumSquaredDev += Math.pow(pred - rates(i), 2)
+            i += 1
+          }
+          /*rates.zipWithIndex.foreach {
+            case (rate, i) =>
+              val userFactor = usersBlock.factors(usersIndex(i))
+              val itemFactor = itemsBlock.factors(itemsIndex(i))
+              val pred = dotP(num_latent, userFactor, 0, itemFactor, 0)
+              val err = pred - rate
+              (0 until num_latent).foreach { j =>
+                userFactor(j) += - gamma * (err * itemFactor(j) + LAMBDA * userFactor(j))
+                itemFactor(j) += - gamma * (err * userFactor(j) + LAMBDA * itemFactor(j))
+              }
+          }*/
+        sumSquaredDev
+      }.values.sum()
+    }
+    val numRatings = ratingsBlocks.mapValues(_.ratings.length).values.sum()
+    Math.sqrt(sumSquaredDevs.sum / numRatings)
   }
 
   type UserId = Int
@@ -298,8 +252,7 @@ object SparkSgdIndexed extends Logging {
   type ItemsBlockId = Int
 
   case class Rating(user: UserId, item: ItemId, rating: Double) extends Serializable
-  case class RatingsBlockDenormalized(users: Array[UserId], items: Array[ItemId], ratings: Array[Double]) extends Serializable
-  //case class RatingsBlockNormalized(ratings: Array[Double], usersIndex: Array[Int], itemsIndex: Array[Int]) extends Serializable
+  case class RatingsBlock(users: Array[UserId], items: Array[ItemId], ratings: Array[Double]) extends Serializable
   case class UsersBlock(users: Map[UserId, Int], factors: Array[Array[Double]]) extends Serializable
   case class ItemsBlock(items: Map[ItemId, Int], factors: Array[Array[Double]]) extends Serializable
 
@@ -315,15 +268,15 @@ object SparkSgdIndexed extends Logging {
       this
     }
 
-    def merge(b: RatingsBlockDenormalized): RatingsBlockDenormalizedBuilder = {
+    def merge(b: RatingsBlock): RatingsBlockDenormalizedBuilder = {
       users ++= b.users
       items ++= b.items
       ratings ++= b.ratings
       this
     }
 
-    def build(): RatingsBlockDenormalized = {
-      RatingsBlockDenormalized(users.result(), items.result(), ratings.result())
+    def build(): RatingsBlock = {
+      RatingsBlock(users.result(), items.result(), ratings.result())
     }
   }
 
