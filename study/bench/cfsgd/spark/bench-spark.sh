@@ -41,7 +41,7 @@ function do_bench() {
   nusers=996994
   nmovies=20972
   nratings=248944185
-  nthreads=8
+  nthreads=16
 
   actual_bench_
 }
@@ -53,7 +53,7 @@ function test_bench() {
   nusers=1024
   nmovies=512
   nratings=524288
-  nthreads=4
+  nthreads=8
 
   actual_bench_
 }
