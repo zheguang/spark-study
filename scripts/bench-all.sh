@@ -1,18 +1,16 @@
 #!/bin/bash
-
 set -e
 
-bench_root=$(dirname $0)/cfsgd
+if [ -d /vagrant ]; then
+  source /vagrant/scripts/common.sh
+else
+  source $(dirname $0)/../scripts/common.sh
+fi
+
+bench_cfsgd=$PROJECT/study/bench/cfsgd
 
 func_mode="test"
 benchs=("cc" "java" "scala" "spark")
-
-function setup_java_opts {
-  dump_dir=/tmp/java
-  mkdir -p $dump_dir
-
-  export JAVA_OPTS="-server -XX:+HeapDumpOnOutOfMemoryError -XX:ErrorFile=$dump_dir/hs_err_pid.log -XX:HeapDumpPath=$dump_dir"
-}
 
 function show_help {
   echo "usage: bench-all.sh -m <test|result> -b <cc|java|scala|spark>..."
@@ -57,28 +55,28 @@ function parse_args {
 function main {
   echo "[info] start bench master"
   for b in "${benchs[@]}"; do
-    echo "[info] start $bench_root/$b"
-    bash $bench_root/$b/bench-${b}.sh $func_mode
-    echo "[info] end $bench_root/$b"
+    echo "[info] start $bench_cfsgd/$b"
+    bash $bench_cfsgd/$b/bench-${b}.sh $func_mode
+    echo "[info] end $bench_cfsgd/$b"
   done
 
   if [ $func_mode = "test" ]; then
     echo "[info] print test outcome"
     for b in "${benchs[@]}"; do
       echo "[info] $b test"
-      tail -n 2 $bench_root/$b/test/*
+      tail -n 2 $bench_cfsgd/$b/test/*
     done
     echo "[info] finish test outcome"
   else
     echo "[info] collect test outcome"
-    all_results=$bench_root/all-results
+    all_results=$bench_cfsgd/all-results
     my_result=$all_results/result.`date +%Y%m%d.%H%M`
     mkdir -p $all_results
     mkdir $my_result
     for b in "${benchs[@]}"; do
       echo "[info] $b test"
       mkdir -p $my_result/$b
-      mv $bench_root/$b/result/* $my_result/$b
+      mv $bench_cfsgd/$b/result/* $my_result/$b
     done
   fi
 
@@ -86,5 +84,4 @@ function main {
 }
 
 parse_args $@
-setup_java_opts
 main

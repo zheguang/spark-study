@@ -1,12 +1,14 @@
 #!/bin/bash
 set -e
 
-study=$(readlink -f `dirname $0`)/../../..
+project=$(readlink -f `dirname $0`)/../../../..
+study=$project/study
 my_bench=$(dirname $0)
+
+source $project/scripts/bench-common.sh
 
 function setup() {
   echo "[INFO] set up"
-  echo "[info] java opts: $JAVA_OPTS"
   func_mode_=$1
   if [ $func_mode_ = "result" ]; then
     if [ -d $my_bench/result ]; then
@@ -24,9 +26,11 @@ function compile() {
 }
 
 function actual_bench_() {
+  echo "[info] set java opts=$JAVA_OPTS"
   if [ $mode = "scala" ]; then
     exe_path_=edu.brown.cs.sparkstudy.ScalaSgd
     >&2 echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
+    echo "[info] java_opts=$JAVA_OPTS"
     echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
     scala -cp $fatJar $exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads 
   elif [ $mode = "breeze" ]; then
@@ -78,6 +82,10 @@ fi
 
 setup $func_mode
 compile
+
+java_opts_=$(get_java_opts)
+export JAVA_OPTS=$java_opts_
+echo "[info] set java opts=$JAVA_OPTS"
 
 echo "[info] start benchmark"
 for l in ${latents[@]}; do

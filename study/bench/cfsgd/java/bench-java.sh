@@ -1,8 +1,11 @@
 #!/bin/bash
 set -e
 
-study=$(readlink -f `dirname $0`)/../../..
+project=$(readlink -f `dirname $0`)/../../../..
+study=$project/study
 my_bench=$(dirname $0)
+
+source $project/scripts/bench-common.sh
 
 #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH
 #source /opt/intel/bin/compilervars.sh intel64
@@ -34,6 +37,7 @@ function compile() {
 }
 
 function test_bench() {
+  echo "[info] set java opts=$JAVA_OPTS"
   latent=$1
   mode=$2
   fatJar=$study/target/scala-2.11/study-assembly-0.1-SNAPSHOT.jar
@@ -46,15 +50,16 @@ function test_bench() {
   exe_path_=com.intel.sparkstudy.matrix.JavaSgdSingleNodeTiles
   >&2 echo "$exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
   echo "$exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
-  java -cp $fatJar $exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads 
+  java $JAVA_OPTS -cp $fatJar $exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads
 
-  exe_path_dotptime_=com.intel.sparkstudy.matrix.JavaSgdSingleNodeTilesDotPTime
-  >&2 echo "$exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
-  echo "$exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
-  java -cp $fatJar $exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads 
+  #exe_path_dotptime_=com.intel.sparkstudy.matrix.JavaSgdSingleNodeTilesDotPTime
+  #>&2 echo "$exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
+  #echo "$exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
+  #java -cp $fatJar $exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads
 }
 
 function do_bench() { 
+  echo "[info] set java opts=$JAVA_OPTS"
   latent=$1
   mode=$2
   fatJar=$study/target/scala-2.11/study-assembly-0.1-SNAPSHOT.jar
@@ -67,7 +72,7 @@ function do_bench() {
   exe_path_=com.intel.sparkstudy.matrix.JavaSgdSingleNodeTiles
   >&2 echo "$exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
   echo "$exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
-  java -cp $fatJar $exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads 
+  java $JAVA_OPTS -cp $fatJar $exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads 
 
   #exe_path_dotptime_=com.intel.sparkstudy.matrix.JavaSgdSingleNodeTilesDotPTime
   #>&2 echo "$exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
@@ -88,6 +93,11 @@ fi
 check_mkl
 setup $func_mode
 compile
+
+java_opts_=$(get_java_opts)
+export JAVA_OPTS=$java_opts_
+echo "[info] set java opts=$JAVA_OPTS"
+
 
 echo "[INFO] start benchmark"
 for m in ${algebra_modes[@]}; do
