@@ -1,0 +1,2 @@
+numactl --interleave=all ./PR -c -f ../../../../data/Graph500/Graph_S20_E16.graph_no_self_loops.1_0.gtgraph -p 16 > out
+grep "Time/" out | awk '{print $3 " seconds/iteration";}'
