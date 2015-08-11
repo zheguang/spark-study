@@ -84,7 +84,7 @@ function actual_bench_() {
 }
 
 modes=("CPP" "BLAS")
-latents=("20" "200")
+latents=("20")
 
 func_mode="test"
 func=test_bench

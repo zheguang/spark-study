@@ -81,7 +81,7 @@ function do_bench() {
 }
 
 algebra_modes=("blas" "java")
-latents=("20" "200")
+latents=("20")
 
 func_mode="test"
 func=test_bench

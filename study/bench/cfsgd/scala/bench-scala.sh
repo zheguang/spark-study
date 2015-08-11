@@ -71,7 +71,7 @@ function do_bench() {
 }
 
 modes=("scala" "breeze")
-latents=("20" "200")
+latents=("20")
 
 func_mode="test"
 func=test_bench
