@@ -1,0 +1,9 @@
+edu.brown.cs.sparkstudy.SparkSgdIndexed 20 /data/devel/research/sam/Rating_S20.train 996994 20972 248944185 8
+[sam] init: ratings count: 248944185, numUserBlocks: 8, numItemBlocks: 8
+[sam] Time in iteration 0 of sgd 66616 (ms)
+[sam] Time in iteration 1 of sgd 32638 (ms)
+[sam] Time in iteration 2 of sgd 35184 (ms)
+[sam] Time in iteration 3 of sgd 39062 (ms)
+[sam] Time in iteration 4 of sgd 39894 (ms)
+[sam] training rmse 0.43172569236075287
+[sam] finished training for total iterations: 5

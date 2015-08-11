@@ -4,7 +4,7 @@ set -e
 
 project_root=$(dirname $0)/..
 
-modes=("cc" "java" "scala")
+modes=("cc" "java" "scala" "spark")
 
 if [ "${#@}" -eq 0 ]; then
   run_modes=$modes
