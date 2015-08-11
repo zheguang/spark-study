@@ -98,21 +98,32 @@ object SparkSgdIndexed extends Logging {
                 }
             }*/
             (usersBlock, itemsBlock)
-        }.persist(StorageLevel.MEMORY_ONLY)
+        }.setName(s"uirBlocks(i$iter)(r$round)")
+          .persist(StorageLevel.MEMORY_ONLY)
         //println(s"[sam] uirBlocksInRoundUpdated count: ${uirBlocksInRoundUpdated.count()}")
 
         // update usersBlocks and itemsBlocks with counterparts in uriBlocks
         val previousUsersBlocks = usersBlocks
-        usersBlocks = uirBlocksInRoundUpdated.map { // todo: keyBy and then mapValues?
+        usersBlocks = uirBlocksInRoundUpdated.map {
           case ((usersBlockId, _), (usersBlock, _)) => (usersBlockId, usersBlock)
-        } //.partitionBy(new HashPartitioner(userPart.numPartitions))
+        }.partitionBy(new HashPartitioner(userPart.numPartitions))
+        /*usersBlocks = uirBlocksInRoundUpdated.keyBy {
+          case ((usersBlockId, _), _) => usersBlockId
+        }.mapValues {
+          case (_, (usersBlock, _)) => usersBlock
+        }*/
         previousUsersBlocks.unpersist()
         usersBlocks.setName(s"usersBlocks(i$iter)(r$round)").persist(StorageLevel.MEMORY_ONLY)
 
         val previousItemsBlocks = itemsBlocks
         itemsBlocks = uirBlocksInRoundUpdated.map {
           case ((_, itemsBlockId), (_, itemsBlock)) => (itemsBlockId, itemsBlock)
-        } //.partitionBy(new HashPartitioner(itemPart.numPartitions))
+        }.partitionBy(new HashPartitioner(itemPart.numPartitions))
+        /*itemsBlocks = uirBlocksInRoundUpdated.keyBy {
+          case ((_, itemsBlockId), _) => itemsBlockId
+        }.mapValues {
+          case (_, (_, itemsBlock)) => itemsBlock
+        }*/
         previousItemsBlocks.unpersist()
         itemsBlocks.setName(s"itemsBlocks(i$iter(r$round)").persist(StorageLevel.MEMORY_ONLY)
 
