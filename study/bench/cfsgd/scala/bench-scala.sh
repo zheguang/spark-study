@@ -70,7 +70,7 @@ function do_bench() {
   actual_bench_
 }
 
-modes=("scala" "breeze")
+modes=("scala")
 latents=("20")
 
 func_mode="test"

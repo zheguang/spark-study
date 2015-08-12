@@ -59,7 +59,7 @@ function test_bench() {
 function do_bench() {
   mode_=$1
   latent_=$2
-  datafile=/ext/research/graphmat/datasets/Rating_S20.train
+  datafile=/data/devel/research/sam/Rating_S20.train
   nusers=996994
   nmovies=20972
   nratings=248944185
