@@ -48,3 +48,4 @@ export SPARK_WORKER_MEMORY=80g # memory per worker instance
 export SPARK_WORKER_INSTANCES=1 # worker instances per node
 export SPARK_DAEMON_MEMORY=80g
 export SPARK_WORKER_OPTS="-Xmn60g -Xms80g -Xmx80g"
+export SPARK_LOCAL_DIRS="/run/spark-local"
