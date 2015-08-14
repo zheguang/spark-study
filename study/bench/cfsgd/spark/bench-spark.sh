@@ -4,7 +4,7 @@ set -e
 study=$(readlink -f `dirname $0`)/../../..
 my_bench=$(dirname $0)
 
-class_name=SparkSgdIndexed
+class_names=("SparkSgdIndexed" "MllibSgd")
 #class_name=MllibSgd
 
 function setup() {
@@ -38,7 +38,8 @@ function actual_bench_() {
 }
 
 function do_bench() {
-  latent=$1
+  class_name=$1
+  latent=$2
   fatJar=$study/target/scala-2.11/study-assembly-0.1-SNAPSHOT.jar
   datafile=/data/devel/research/sam/Rating_S20.train
   nusers=996994
@@ -50,7 +51,8 @@ function do_bench() {
 }
 
 function test_bench() {
-  latent=$1
+  class_name=$1
+  latent=$2
   fatJar=$study/target/scala-2.11/study-assembly-0.1-SNAPSHOT.jar
   datafile=$study/src/main/cc/ratings_u10_v9.dat
   nusers=1024
@@ -74,7 +76,9 @@ setup $func_mode
 compile
 
 echo "[info] start benchmark"
-for l in ${latents[@]}; do
-  $func $l 1> $my_bench/$func_mode/${class_name}_l${l}.result
+for c in ${class_names[@]}; do
+  for l in ${latents[@]}; do
+    $func $c $l 1> $my_bench/$func_mode/${c}_l${l}.result
+  done
 done
 echo "[info] end benchmark"
