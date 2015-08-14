@@ -4,6 +4,9 @@ set -e
 study=$(readlink -f `dirname $0`)/../../..
 my_bench=$(dirname $0)
 
+class_name=SparkSgdIndexed
+#class_name=MllibSgd
+
 function setup() {
   echo "[INFO] set up"
   func_mode_=$1
@@ -23,10 +26,10 @@ function compile() {
 }
 
 function actual_bench_() {
-  exe_path_=edu.brown.cs.sparkstudy.SparkSgdIndexed
+  exe_path_=edu.brown.cs.sparkstudy.$class_name
   >&2 echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
   echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
-  /usr/local/spark/bin/spark-submit --name bench-$func_mode-SparkSgdIndexed --class $exe_path_ $fatJar $latent $datafile $nusers $nmovies $nratings $nthreads 2>/tmp/samrun
+  /usr/local/spark/bin/spark-submit --name bench-$func_mode-$class_name --class $exe_path_ $fatJar $latent $datafile $nusers $nmovies $nratings $nthreads 2>/tmp/samrun
   if [ $? -gt 0 ]; then
     echo "[error] execution error"
     cat /tmp/samrun
@@ -72,6 +75,6 @@ compile
 
 echo "[info] start benchmark"
 for l in ${latents[@]}; do
-  $func $l 1> $my_bench/$func_mode/SparkSgdIndexed_l${l}.result
+  $func $l 1> $my_bench/$func_mode/${class_name}_l${l}.result
 done
 echo "[info] end benchmark"

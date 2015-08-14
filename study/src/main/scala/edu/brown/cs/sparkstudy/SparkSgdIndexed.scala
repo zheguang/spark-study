@@ -41,17 +41,17 @@ object SparkSgdIndexed extends Logging {
     val ratingsBlocks = partitionRatings(ratings, userPart, itemPart)
     var (usersBlocks, itemsBlocks) = makeFactorsBlocks(userPart, itemPart, ratingsBlocks, num_latent)
     // materialize
-    usersBlocks.count()
-    itemsBlocks.count()
+    usersBlocks.count() // todo: remove
+    itemsBlocks.count() // todo: remove
     //println(s"[sam] init: ratingsblocks count: ${ratingsBlocks.count()}, usersBlocks count: ${usersBlocks.count()}, itemsBlocks count: ${itemsBlocks.count()}")
     //println(s"[sam] init: numUsers: ${usersBlocks.mapValues(_.users.length).values.sum()}, numItems: ${itemsBlocks.mapValues(_.items.length).values.sum()}")
 
     val maxNumIters = 5
     val numDiagnalRounds = itemsBlocks.count().toInt
 
+    val start = System.currentTimeMillis()
     var gamma = 0.001
     for (iter <- 0 until maxNumIters) {
-      val iterStart = System.currentTimeMillis()
       for (round <- 0 until numDiagnalRounds) {
         val ratingsBlocksInRound = ratingsBlocks.filter {
           case ((usersBlockId, itemsBlockId), _) => (usersBlockId + round) % numDiagnalRounds == itemsBlockId
@@ -128,17 +128,19 @@ object SparkSgdIndexed extends Logging {
         itemsBlocks.setName(s"itemsBlocks(i$iter(r$round)").persist(StorageLevel.MEMORY_ONLY)
 
         // materialize
-        usersBlocks.count()
-        itemsBlocks.count()
+        //usersBlocks.count()
+        //itemsBlocks.count()
         //println(s"[sam] usersBlocks count: ${usersBlocks.count()}, itemsBlocks coutn: ${itemsBlocks.count()}")
 
         // clean up
         uirBlocksInRoundUpdated.unpersist()
       }
       gamma *= STEP_DEC
-      val iterEnd = System.currentTimeMillis()
-      println(s"[sam] Time in iteration $iter of sgd ${iterEnd - iterStart} (ms)")
     }
+    usersBlocks.count() // make sure work is done and measured
+    itemsBlocks.count()
+    val end = System.currentTimeMillis()
+    println(s"[sam] Time in iterations of sgd ${(end - start) / maxNumIters} (ms)")
 
     //println(s"[sam] usersBlocks size: ${usersBlocks.count()}, itemsBlocks size: ${itemsBlocks.count()}")
     //println(s"[sam] usersBlocks parts: ${usersBlocks.partitions.length}, itemsBlocks parts: ${itemsBlocks.partitions.length}")
