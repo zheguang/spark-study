@@ -1,0 +1,34 @@
+build/sgd_single_intel_l20_BLAS.out /data/devel/research/sam/Rating_S20.train 996994 20972 248944185 8
+algebra_mode=BLAS
+nlatent=20
+filename=/data/devel/research/sam/Rating_S20.train
+num_users=996994
+num_movies=20972
+num_user_movie_rating=248944185
+num_procs=8
+num_nodes=1
+Time in data read 69798.324871 (ms)
+Time in U-V mat init 266.857047 (ms)
+Time in iteration 0 of sgd 4194.603980 (ms)
+Time in iteration 1 of sgd 4169.765895 (ms)
+Time in iteration 2 of sgd 4159.184636 (ms)
+Time in iteration 3 of sgd 4109.241837 (ms)
+Time in iteration 4 of sgd 4085.464000 (ms)
+Training rmse 0.253060
+build/sgd_single_intel_l20_BLAS_copyedge.out /data/devel/research/sam/Rating_S20.train 996994 20972 248944185 8
+algebra_mode=BLAS
+nlatent=20
+filename=/data/devel/research/sam/Rating_S20.train
+num_users=996994
+num_movies=20972
+num_user_movie_rating=248944185
+num_procs=8
+num_nodes=1
+Time in data read 69807.390079 (ms)
+Time in U-V mat init 266.116521 (ms)
+Time in iteration 0 of sgd 2695.934912 (ms)
+Time in iteration 1 of sgd 2691.164557 (ms)
+Time in iteration 2 of sgd 2797.166000 (ms)
+Time in iteration 3 of sgd 2705.764590 (ms)
+Time in iteration 4 of sgd 2679.750776 (ms)
+Training rmse 0.253060
