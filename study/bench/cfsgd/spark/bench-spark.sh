@@ -4,7 +4,8 @@ set -e
 study=$(readlink -f `dirname $0`)/../../..
 my_bench=$(dirname $0)
 
-class_names=("SparkSgdIndexed" "MllibSgd")
+#class_names=("SparkSgdIndexed" "MllibSgd")
+class_names=("SparkSgdIndexed")
 #class_name=MllibSgd
 
 function setup() {

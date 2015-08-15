@@ -14,7 +14,7 @@ spark.eventLog.enabled            true
 spark.eventLog.dir                file:///var/spark/eventLog
 spark.serializer                  org.apache.spark.serializer.KryoSerializer
 spark.driver.memory               5g
-spark.executor.extraJavaOptions   -XX:+PrintFlagsFinal -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution -XX:+UnlockDiagnosticVMOptions -XX:+G1SummarizeConcMark
+spark.executor.extraJavaOptions   -XX:+PrintFlagsFinal -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution -XX:+UnlockDiagnosticVMOptions -XX:+G1SummarizeConcMark -XX:+PrintTenuringDistribution -XX:SurvivorRatio=10 -Xmn40g -XX:MetaspaceSize=100M
 spark.executor.cores              8
 spark.executor.memory             80g
 spark.shuffle.spill               false
