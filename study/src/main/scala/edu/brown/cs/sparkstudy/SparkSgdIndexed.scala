@@ -51,6 +51,9 @@ object SparkSgdIndexed extends Logging {
     val numDiagnalRounds = numItemBlocks
     var gamma = 0.001
 
+    val originalUsersBlocks = usersBlocks
+    val originalItemsBlocks = itemsBlocks
+
     val ratingsBlocksInRounds = new Array[RDD[((UsersBlockId, ItemsBlockId), RatingsBlock)]](numDiagnalRounds)
     var round = 0
     while (round < numDiagnalRounds) {
@@ -62,7 +65,8 @@ object SparkSgdIndexed extends Logging {
     }
 
     var iter = 0
-    var previousUirBlockUpdated: RDD[((UsersBlockId, ItemsBlockId), (UsersBlock, ItemsBlock))] = null
+    //var previousUirBlockUpdated: RDD[((UsersBlockId, ItemsBlockId), (UsersBlock, ItemsBlock))] = null
+    val previousUirBlocks = mutable.ArrayBuilder.make[RDD[((UsersBlockId, ItemsBlockId), (UsersBlock, ItemsBlock))]]
     while (iter < maxNumIters) {
       var round = 0
       while (round < numDiagnalRounds) {
@@ -117,18 +121,19 @@ object SparkSgdIndexed extends Logging {
         }, true) //.partitionBy(new HashPartitioner(itemPart.numPartitions))*/
         itemsBlocks.setName(s"I(i$iter(r$round)")
 
+        previousUirBlocks += uirBlocksInRoundUpdated
         // clean up
-        if (previousUirBlockUpdated != null) {
-          previousUirBlockUpdated.unpersist(false)
-        }
-        previousUirBlockUpdated = uirBlocksInRoundUpdated
+        //if (previousUirBlockUpdated != null) {
+        //  previousUirBlockUpdated.unpersist(false)
+        //}
+        //previousUirBlockUpdated = uirBlocksInRoundUpdated
 
         round += 1
       }
       gamma *= STEP_DEC
       iter += 1
     }
-    previousUirBlockUpdated.unpersist(false)
+    //previousUirBlockUpdated.unpersist(false)
 
     // materialize results
     usersBlocks.persist(StorageLevel.MEMORY_ONLY)
@@ -137,8 +142,11 @@ object SparkSgdIndexed extends Logging {
     val finalItemsCount = itemsBlocks.count()
 
     // clean up
+    previousUirBlocks.result().foreach(_.unpersist(false))
     ratingsBlocksInRounds.foreach(_.unpersist(false))
     ratingsBlocks.unpersist(false)
+    originalUsersBlocks.unpersist(false)
+    originalItemsBlocks.unpersist(false)
 
     val end = System.currentTimeMillis()
     println(s"[sam] Time in iterations of sgd ${(end - start) / maxNumIters} (ms)")
@@ -161,7 +169,7 @@ object SparkSgdIndexed extends Logging {
         combOp = (b1, b2) => b1.merge(b2.build()))
       .mapValues(_.build())
       .setName("usersBlocks")
-      //.persist(StorageLevel.MEMORY_ONLY)
+      .persist(StorageLevel.MEMORY_ONLY)
 
     // aggregate by item-block ids to create item blocks, each with unique
     // item ids that are shared acrosss different user blocks
