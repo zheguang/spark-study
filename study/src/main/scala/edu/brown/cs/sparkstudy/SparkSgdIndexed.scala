@@ -72,15 +72,20 @@ object SparkSgdIndexed extends Logging {
       while (round < numDiagnalRounds) {
         val ratingsBlocksInRound = ratingsBlocksInRounds(round)
 
-        val uirBlocksInRound = itemsBlocks.keyBy { case (itemsBlockId, _) =>
+        val uirBlocksInRound = itemsBlocks.keyBy {
+          case (itemsBlockId, _) =>
             //(itemsBlockId + round) % numDiagnalRounds
             (itemsBlockId + round * (numDiagnalRounds - 1)) % numDiagnalRounds
-          }.setName(s"I.keyBy(i$iter)(r$round)")
+        }.setName(s"I.keyBy(i$iter)(r$round)")
+          //.partitionBy(new HashPartitioner(userPart.numPartitions)) // unless join is hash-join, need partitionBy for avoiding nested loop join.
+          //.setName(s"I.keyBy.PartitionBy(i$iter)(r$round)")
           .join(usersBlocks, new HashPartitioner(userPart.numPartitions)) //usersBlocks.partitioner.get
           .setName(s"I.join(U)(i$iter)(r$round)")
-          .map { case (usersBlockId, ((itemsBlockId, itemsBlock), usersBlock)) =>
-          ((usersBlockId, itemsBlockId), (usersBlock, itemsBlock))
+          .map {
+          case (usersBlockId, ((itemsBlockId, itemsBlock), usersBlock)) => // pipelined with join, rather than wait for entire partition to be ready as in mapPartition
+            ((usersBlockId, itemsBlockId), (usersBlock, itemsBlock))
         }.setName(s"I.join(U).map(i$iter)(r$round)")
+          //.partitionBy(ratingsBlocks.partitioner.get)
           .join(ratingsBlocksInRound, ratingsBlocks.partitioner.get)
           .setName(s"I.join(U, R).map.join(i$iter)(r$round)")
 
@@ -107,18 +112,23 @@ object SparkSgdIndexed extends Logging {
           .persist(StorageLevel.MEMORY_ONLY)
 
         // update usersBlocks and itemsBlocks with counterparts in uriBlocks
+        /*usersBlocks = uirBlocksInRoundUpdated.mapPartitions({
+          x => x.map {
+            case ((usersBlockId, _), (usersBlock, _)) => (usersBlockId, usersBlock)
+          }
+        }, true)*/
+        //assert (uirBlocksInRoundUpdated.partitioner == ratingsBlocks.partitioner)
         usersBlocks = uirBlocksInRoundUpdated.mapPartitions({
           x => x.map {
             case ((usersBlockId, _), (usersBlock, _)) => (usersBlockId, usersBlock)
           }
-        }, true) //.partitionBy(new HashPartitioner(userPart.numPartitions))*/
+        }, true)
+        //.partitionBy(new HashPartitioner(userPart.numPartitions))
         usersBlocks.setName(s"U(i$iter)(r$round)")
 
-        itemsBlocks = uirBlocksInRoundUpdated.mapPartitions({
-          x => x.map {
-            case ((_, itemsBlockId), (_, itemsBlock)) => (itemsBlockId, itemsBlock)
-          }
-        }, true) //.partitionBy(new HashPartitioner(itemPart.numPartitions))*/
+        itemsBlocks = uirBlocksInRoundUpdated.map {
+          case ((_, itemsBlockId), (_, itemsBlock)) => (itemsBlockId, itemsBlock)
+        } //.partitionBy(new HashPartitioner(itemPart.numPartitions))*/
         itemsBlocks.setName(s"I(i$iter(r$round)")
 
         previousUirBlocks += uirBlocksInRoundUpdated
