@@ -1,6 +1,8 @@
 OBJECTS = main.o csr.o adj.o 
 FLAGS = -lrt -openmp -DUSE_OMP 
 debug=0
+CC=icc
+EXE=pagerank.out
 
 ifeq (${debug}, 1)
   FLAGS += -g -O3 -DUSE_DEBUG
@@ -14,15 +16,15 @@ endif
 
 INC = #-I/opt/intel/vtune_amplifier_xe_2013/include/
 LIB = 
-PR: $(OBJECTS)
-	icc $(FLAGS) $(LIB) $(INC) -o PR $(OBJECTS) #/opt/intel/vtune_amplifier_xe_2013/lib64/libittnotify.a
+$(EXE): $(OBJECTS)
+	$(CC) $(FLAGS) $(LIB) $(INC) -o $(EXE) $(OBJECTS) #/opt/intel/vtune_amplifier_xe_2013/lib64/libittnotify.a
 
 main.o : main.c graph.h
-	icc $(FLAGS) $(LIB) $(INC) -c main.c
+	$(CC) $(FLAGS) $(LIB) $(INC) -c main.c
 csr.o : csr.c graph.h
-	icc $(FLAGS) $(LIB) $(INC) -c csr.c
+	$(CC) $(FLAGS) $(LIB) $(INC) -c csr.c
 adj.o : adj.c graph.h
-	icc $(FLAGS) $(LIB) $(INC) -c adj.c
+	$(CC) $(FLAGS) $(LIB) $(INC) -c adj.c
 
 clean :
-	rm $(OBJECTS) PR
+	rm -f $(OBJECTS) $(EXE)

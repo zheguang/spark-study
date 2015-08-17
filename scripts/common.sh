@@ -1,4 +1,7 @@
-LOCAL_PROJECT=$(readlink -f `dirname $0`)/..
+#!/bin/bash
+set -e
+
+LOCAL_PROJECT=$(readlink -f `dirname ${BASH_SOURCE[0]}`/..)
 if [ -d /vagrant ]; then
   PROJECT=/vagrant
 else
@@ -48,6 +51,10 @@ function assertExists {
   fi
 }
 
-function log {
-  echo "[INFO] $@" >&1
+function logInfo {
+  echo "[info] $@"
+}
+
+function logError {
+  echo "[error] $@"
 }
