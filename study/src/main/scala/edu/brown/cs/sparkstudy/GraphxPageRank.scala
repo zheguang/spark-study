@@ -15,17 +15,17 @@ object GraphxPageRank extends Logging {
 
     val fname = args(0)
     val iters = args(1).toInt
-    val sparkConf = new SparkConf().setAppName("GraphxPageRank(" + fname + ")")
-    val ctx = new SparkContext(sparkConf)
+    val sparkConf = new SparkConf()
+    val sc = new SparkContext(new SparkConf())
 
     val numEPart = 2
     val edgeStorageLevel = StorageLevel.MEMORY_ONLY
     val vertexStorageLevel = StorageLevel.MEMORY_ONLY
     val partitionStrategy = PartitionStrategy.fromString("RandomVertexCut")
-    val outFname = "file:///tmp/GraphxPagaeRank_" + fname + "_output"
+    val outFname = "file:///run/spark-local/GraphxPagaeRank_" + fname + "_output"
 
     val unpartitionedGraph = GraphLoader.edgeListFile(
-      ctx,
+      sc,
       fname,
       numEdgePartitions = numEPart,
       edgeStorageLevel = edgeStorageLevel,
@@ -33,13 +33,17 @@ object GraphxPageRank extends Logging {
     ).cache()
     val graph = unpartitionedGraph.partitionBy(partitionStrategy)
 
+    val start = System.currentTimeMillis()
     val pr = PageRank.run(graph, iters).vertices.cache()
+    pr.foreachPartition(x => {}) // force to materialize so as to measure the compute time
+    val end = System.currentTimeMillis()
+    println(s"[info] For $iters iterations, average time per interation is ${(end - start) / iters}")
 
-    printf("Total rank: %f\n", pr.map(_._2).reduce(_ + _))
+    printf("[info] Total rank: %f\n", pr.map(_._2).reduce(_ + _))
 
-    logWarning("Saving pageranks of pages to " + outFname)
-    pr.map { case (id, r) => id + "\t" + r }.saveAsTextFile(outFname)
+    //logWarning("Saving pageranks of pages to " + outFname)
+    //pr.map { case (id, r) => id + "\t" + r }.saveAsTextFile(outFname)
 
-    ctx.stop()
+    sc.stop()
   }
 }
