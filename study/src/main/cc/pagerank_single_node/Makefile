@@ -1,6 +1,6 @@
 OBJECTS = main.o csr.o adj.o 
 FLAGS = -lrt -openmp -DUSE_OMP 
-debug=1
+debug=0
 CC=icc
 EXE=pagerank.out
 

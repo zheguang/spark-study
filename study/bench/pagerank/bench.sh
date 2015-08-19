@@ -69,8 +69,28 @@ function bench_java {
   echo "[info] done bench java."
 }
 
-bench_cc
+function bench_scala {
+  echo "[info] start bench scala."
+  local class=edu.brown.cs.sparkstudy.ScalaPageRank
+  local jar=$PROJECT/study/target/scala-2.11/study-assembly-0.1-SNAPSHOT.jar
+  local args="${dataFiles["native"]} $numThreads"
+  local result=$BENCH_PAGERANK/pagerank_scala.result
+
+  local oldJavaOpts=$JAVA_OPTS
+  export JAVA_OPTS=$(get_java_opts)
+  echo "[info] set java opts=$JAVA_OPTS"
+
+  scala -cp $jar $class $args > $result
+
+  export jAVA_OPTS=$oldJavaOpts
+  echo "[info] restore java opts=$JAVA_OPTS"
+
+  echo "[info] done bench scala."
+}
+
+#bench_cc
 
 sbt_assemble
 #bench_graphx
-bench_java
+#bench_java
+bench_scala
