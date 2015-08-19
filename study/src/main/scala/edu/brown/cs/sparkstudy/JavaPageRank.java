@@ -4,7 +4,10 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.*;
 
 /**
  * Created by sam on 8/18/15.
@@ -13,6 +16,8 @@ public class JavaPageRank {
 
     static double RDM_JMP = 0.3;
     static double THRESH = 0.000001;
+    static ExecutorService procsPool;
+    static int numThreads;
 
     static class Csr {
         int[] edge_idx;
@@ -226,9 +231,16 @@ public class JavaPageRank {
 
     public static void main(String[] args) throws IOException {
         String file = args[0];
+        numThreads = Integer.parseInt(args[1]);
+        procsPool = Executors.newFixedThreadPool(numThreads);
         Csr graph = Csr.from(file);
 
         computePageRankCsr(graph);
+
+        System.out.println("[info] tear down thread pool.");
+        procsPool.shutdown();
+        assert procsPool.isTerminated();
+
         System.out.println("[info] done");
     }
 
@@ -244,22 +256,31 @@ public class JavaPageRank {
             terminate = true;
 
             //#pragma omp parallel for num_threads(num_threads) shared(graph) schedule(guided,4096)
-            for(int i=0;i<graph.v_size;i++){
-                //graph.vet_weight_back[i]=0;
-                for(int j=(i==0?0:graph.rev_vet_idx[i-1]); j<graph.rev_vet_idx[i]; j++){
-                    int source = i;
-                    int target = graph.rev_edge_idx[j];
-                    //int target_2 = graph.rev_edge_idx[j+8];
-                    //printf("source %d target %d pr target %f rp target %f\n", source, target, graph.vet_wr[target].weight, graph.vet_wr[target].recip);
-                    graph.vet_weight_back[source]+= graph . vet_wr[target].weight * graph . vet_wr[target].recip;
-                }
-                graph.vet_weight_back[i] = rand_jump + purpose_jump*graph.vet_weight_back[i];
-                if(Math.abs(graph.vet_weight_back[i]-graph.vet_wr[i].weight)>THRESH)
-                    terminate = false;
-                graph.vet_wr[i].weight = graph.vet_weight_back[i];
-                //printf("%f %f ", graph.vet_wr[i].weight, 1.0/graph.vet_wr[i].recip);
-                graph.vet_weight_back[i] = 0.0;
+            List<Callable<Boolean>> tasks = new ArrayList<>(numThreads);
+            int numVerticesPerThread = (int) Math.ceil(graph.v_size / (double) numThreads);
+            //for(int i=0;i<graph.v_size;i=(i+numVerticesPerThread)){
+            for (int tid = 0; tid < numThreads; tid++) {
+                final int startVertexId = tid * numVerticesPerThread;
+                final int numVertices = Math.min((tid + 1) * numVerticesPerThread, graph.v_size) - startVertexId;
+                tasks.add(() -> processSubgraph(graph, rand_jump, purpose_jump, startVertexId, numVertices));
             }
+
+            try {
+                List<Future<Boolean>> threadFutures = procsPool.invokeAll(tasks);
+                for (Future<Boolean> f : threadFutures) {
+                    boolean status = f.get();
+                    if (!status) {
+                        terminate = false;
+                    }
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+                System.exit(123);
+            }
+
+            //int startVertexId = 0;
+            //int numVertices = graph.v_size;
+            //terminate = processSubgraph(graph, rand_jump, purpose_jump, startVertexId, numVertices);
         }
 
         double end = System.currentTimeMillis();
@@ -272,5 +293,26 @@ public class JavaPageRank {
             sum += graph.vet_wr[i].weight;
         }
         System.out.printf("[debug] sum = %f\n", sum);
+    }
+
+    private static boolean processSubgraph(Csr graph, double rand_jump, double purpose_jump, int startVertexId, int numVertices) {
+        boolean terminate = true;
+        for(int i = startVertexId; i < startVertexId + numVertices; i++) {
+            //graph.vet_weight_back[i]=0;
+            for(int j = (i == 0 ? 0 : graph.rev_vet_idx[i - 1]); j < graph.rev_vet_idx[i]; j++){
+                int source = i;
+                int target = graph.rev_edge_idx[j];
+                //int target_2 = graph.rev_edge_idx[j+8];
+                //printf("source %d target %d pr target %f rp target %f\n", source, target, graph.vet_wr[target].weight, graph.vet_wr[target].recip);
+                graph.vet_weight_back[source] += graph.vet_wr[target].weight * graph.vet_wr[target].recip;
+            }
+            graph.vet_weight_back[i] = rand_jump + purpose_jump*graph.vet_weight_back[i];
+            if(Math.abs(graph.vet_weight_back[i]-graph.vet_wr[i].weight)>THRESH)
+                terminate = false;
+            graph.vet_wr[i].weight = graph.vet_weight_back[i];
+            //printf("%f %f ", graph.vet_wr[i].weight, 1.0/graph.vet_wr[i].recip);
+            graph.vet_weight_back[i] = 0.0;
+        }
+        return terminate;
     }
 }

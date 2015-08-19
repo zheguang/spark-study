@@ -69,7 +69,7 @@ function bench_java {
   echo "[info] done bench java."
 }
 
-#bench_cc
+bench_cc
 
 sbt_assemble
 #bench_graphx

@@ -337,11 +337,11 @@ void compute_pagerank_csr(t_csr *graph){
 	printf("Final pagerank values: \n");
 	for(i=0;i<graph->v_size;i++){
 			//printf("%lf ", graph->vet_wr[i].weight/graph->v_size);
-			printf("%.6lf ", graph->vet_wr[i].weight);
+			//printf("%.6lf ", graph->vet_wr[i].weight);
 			sum += graph->vet_wr[i].weight;
 	}
 	
-	printf("\n");
+	//printf("\n");
 	printf("sum = %.6lf\n", sum);
 #endif
 	//printf("iterations taken: %d\n", iter);
