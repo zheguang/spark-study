@@ -24,6 +24,7 @@ object GraphxPageRank extends Logging {
     val partitionStrategy = PartitionStrategy.fromString("RandomVertexCut")
     val outFname = "file:///run/spark-local/GraphxPagaeRank_" + fname + "_output"
 
+    val initStart = System.currentTimeMillis()
     val unpartitionedGraph = GraphLoader.edgeListFile(
       sc,
       fname,
@@ -32,12 +33,14 @@ object GraphxPageRank extends Logging {
       vertexStorageLevel = vertexStorageLevel
     ).cache()
     val graph = unpartitionedGraph.partitionBy(partitionStrategy)
+    val initEnd = System.currentTimeMillis()
+    println(s"[info] init graph time: ${initEnd - initEnd}")
 
-    val start = System.currentTimeMillis()
+    val trainStart = System.currentTimeMillis()
     val pr = PageRank.run(graph, iters).vertices.cache()
     pr.foreachPartition(x => {}) // force to materialize so as to measure the compute time
-    val end = System.currentTimeMillis()
-    println(s"[info] For $iters iterations, average time per interation is ${(end - start) / iters}")
+    val trainEnd = System.currentTimeMillis()
+    println(s"[info] For $iters iterations, average time per interation is ${(trainEnd - trainStart) / iters}")
 
     printf("[info] Total rank: %f\n", pr.map(_._2).reduce(_ + _))
 
