@@ -198,9 +198,9 @@ public class JavaPageRank {
                     if (e_num_read == graph.e_size) {
                         break;
                     }
-                    if(e_num_read%100000==0) {
-                        System.out.printf("%d \n", e_num_read);
-                    }
+                    //if(e_num_read%100000==0) {
+                    //    System.out.printf("%d \n", e_num_read);
+                    //}
                 }
                 int sum = 0;
                 int rev_sum = 0;

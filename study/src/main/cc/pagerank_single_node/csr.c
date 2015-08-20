@@ -229,8 +229,8 @@ void scan_csr_idx(t_csr *graph, char* file)
 			e_num_read++;
 			if(e_num_read == e_num) 
 				break;
-			if(e_num_read%100000==0)
-				printf("%d \n", e_num_read);
+			//if(e_num_read%100000==0)
+			//	printf("%d \n", e_num_read);
 		}
 	}
 	for(i=0;i<v_num;i++){

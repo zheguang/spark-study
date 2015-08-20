@@ -1,7 +1,5 @@
 package edu.brown.cs.sparkstudy
 
-import java.util.concurrent.atomic.AtomicBoolean
-
 import edu.brown.cs.sparkstudy.CfSgdCommon._
 import edu.brown.cs.sparkstudy.JavaPageRank.Csr
 
@@ -15,8 +13,6 @@ object ScalaPageRank {
     val graph = Csr.from(file)
 
     computePageRankCsr(graph, numThreads)
-
-
   }
 
   def computePageRankCsr(graph: Csr, numThreads: Int) = {
@@ -27,18 +23,20 @@ object ScalaPageRank {
 
     val start = System.currentTimeMillis()
     while (!terminate) {
-      iter += 1
-      terminate = true
-
       //#pragma omp parallel for num_threads(num_threads) shared(graph) schedule(guided,4096)
       val numVerticesPerThread = Math.ceil(graph.v_size.toDouble / numThreads.toDouble).toInt
       //for(int i=0;i<graph.v_size;i=(i+numVerticesPerThread)){
-      val result = parallelize(0 until numThreads, numThreads) map { tid =>
+      val convergence = parallelize(0 until numThreads, numThreads) map { tid =>
         val startVertexId = tid * numVerticesPerThread
         val numVertices = Math.min((tid + 1) * numVerticesPerThread, graph.v_size) - startVertexId;
         processSubgraph(graph, rand_jump, purpose_jump, startVertexId, numVertices)
       }
-      terminate = result.count(_ == true) > 0
+      if (convergence.count(_ == false) == 0) {
+        terminate = true
+      } else {
+        terminate = false
+      }
+      iter += 1
     }
     val end = System.currentTimeMillis()
     printf("[info] Overall time = %d seconds\n", end - start)
@@ -51,12 +49,12 @@ object ScalaPageRank {
       sum += graph.vet_wr(i).weight
       i += 1
     }
-    printf("[debug] sum = %f\n", sum);
+    printf("[debug] sum = %f\n", sum)
   }
 
   def processSubgraph(graph: Csr, rand_jump: Double, purpose_jump: Double, startVertexId: Int, numVertices: Int): Boolean = {
-    val result = (startVertexId until startVertexId + numVertices).map { i =>
-      var terminate = true
+    val allConvergence = (startVertexId until startVertexId + numVertices).map { i =>
+      var convergence = true
       val rev_vet_idx_start = if (i == 0) 0 else graph.rev_vet_idx(i - 1)
       (rev_vet_idx_start until graph.rev_vet_idx(i)).foreach { j =>
         val source = i
@@ -67,14 +65,14 @@ object ScalaPageRank {
       }
       graph.vet_weight_back(i) = rand_jump + purpose_jump*graph.vet_weight_back(i);
       if(Math.abs(graph.vet_weight_back(i)-graph.vet_wr(i).weight)>THRESH)
-        terminate = false
+        convergence = false
       graph.vet_wr(i).weight = graph.vet_weight_back(i)
       //printf("%f %f ", graph.vet_wr[i].weight, 1.0/graph.vet_wr[i].recip);
       graph.vet_weight_back(i) = 0.0
 
-      terminate
+      convergence
     }
 
-    result.count(_ == true) > 0
+    allConvergence.count(_ == false) == 0
   }
 }

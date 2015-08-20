@@ -12,7 +12,7 @@ declare -A dataFiles
 bigFile=Graph_S24_E16.graph_no_self_loops.1_0.gtgraph
 smallFile=Graph_S20_E16.graph_no_self_loops.1_0.gtgraph
 
-dataFiles=(["native"]=$dataDir/$smallFile ["elist"]=$dataDir/${smallFile}.edgelist)
+dataFiles=(["native"]=$dataDir/$bigFile ["elist"]=$dataDir/${bigFile}.edgelist)
 
 numThreads=8
 
@@ -45,7 +45,7 @@ function bench_graphx {
   local args="file://${dataFiles["elist"]} $iters"
   local result=$BENCH_PAGERANK/pagerank_graphx.result
 
-  /usr/local/spark/bin/spark-submit --name $name --class $class $jar $args > $result
+  /usr/local/spark/bin/spark-submit --name $name --class $class $jar $args 1>$result 2>/tmp/samrun
   echo "[info] $(grep "time" $result)"
   echo "[info] done bench graphx."
 }
@@ -91,6 +91,6 @@ function bench_scala {
 #bench_cc
 
 sbt_assemble
-#bench_graphx
+bench_graphx
 #bench_java
-bench_scala
+#bench_scala
