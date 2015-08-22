@@ -35,7 +35,6 @@ object SparkSgdIndexed extends Logging {
     val numItemBlocks = num_nodes * num_procs
     println(s"[sam] init: ratings count: ${ratings.count()}, numUserBlocks: $numUserBlocks, numItemBlocks: $numItemBlocks")
 
-    val start = System.currentTimeMillis()
     val userPart = new HashPartitioner(numUserBlocks)
     val itemPart = new HashPartitioner(numItemBlocks)
 
@@ -44,8 +43,10 @@ object SparkSgdIndexed extends Logging {
     var (usersBlocks, itemsBlocks) = makeFactorsBlocks(userPart, itemPart, ratingsBlocks, num_latent)
     // Uncommented when getting training per-iteration time without U-I init time
     // materialize
-    //usersBlocks.count()
-    //itemsBlocks.count()
+    usersBlocks.foreachPartition(_ => {})
+    itemsBlocks.foreachPartition(_ => {})
+
+    val start = System.currentTimeMillis()
 
     val maxNumIters = 5
     val numDiagnalRounds = numItemBlocks
@@ -167,6 +168,8 @@ object SparkSgdIndexed extends Logging {
     val trainErr = computeTrainingError(usersBlocks, itemsBlocks, ratingsBlocks)
     println(s"[sam] training rmse $trainErr")
     println(s"[sam] finished training for total iterations: $maxNumIters")
+
+    sc.stop()
   }
 
   private def makeFactorsBlocks(userPart: HashPartitioner, itemPart: HashPartitioner, ratingsBlocks: RDD[((UsersBlockId, ItemsBlockId), RatingsBlock)], num_latent: Int): (RDD[(UsersBlockId, UsersBlock)], RDD[(ItemsBlockId, ItemsBlock)]) = {

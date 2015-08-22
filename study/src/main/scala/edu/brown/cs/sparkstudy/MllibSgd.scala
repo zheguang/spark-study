@@ -32,10 +32,10 @@ object MllibSgd extends Logging {
     val numIterations = 5
     val parallelism = num_nodes * num_procs
 
-    val start = System.currentTimeMillis()
+    //val start = System.currentTimeMillis()
     val model = ALS.train(ratings, rank, numIterations, LAMBDA, parallelism)
     val end = System.currentTimeMillis()
-    println(s"Average training time per iteration: ${(end - start) / numIterations}")
+    println(s"[sam] End training time for all iterations: $end")
 
     // Evaluate the model on rating data
     val usersProducts = ratings.map { case Rating(user, product, rate) =>
@@ -53,5 +53,7 @@ object MllibSgd extends Logging {
       err * err
     }.mean()
     println("Mean Squared Error = " + MSE)
+
+    sc.stop()
   }
 }

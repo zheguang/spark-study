@@ -36,11 +36,11 @@ object GraphxPageRank extends Logging {
     val initEnd = System.currentTimeMillis()
     println(s"[info] init graph time: ${initEnd - initEnd}")
 
-    val trainStart = System.currentTimeMillis()
+    //val trainStart = System.currentTimeMillis()
     val pr = PageRank.run(graph, iters).vertices.cache()
     pr.foreachPartition(x => {}) // force to materialize so as to measure the compute time
     val trainEnd = System.currentTimeMillis()
-    println(s"[info] For $iters iterations, average time per interation is ${(trainEnd - trainStart) / iters}")
+    println(s"[info] For $iters iterations, the end training time is $trainEnd")
 
     printf("[info] Total rank: %f\n", pr.map(_._2).reduce(_ + _))
 

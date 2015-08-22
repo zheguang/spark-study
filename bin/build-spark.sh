@@ -8,7 +8,7 @@ else
 fi
 
 function buildSpark {
-  log "build spark"
+  logInfo "build spark"
   #export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64
   if [ -z $JAVA_HOME ]; then
     echo "[error] JAVA_HOME is not set."

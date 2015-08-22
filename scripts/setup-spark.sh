@@ -30,7 +30,7 @@ function parseArgs {
 }
 
 function installSpark {
-  log "install spark"
+  logInfo "install spark"
   #./make-distribution.sh --skip-java-test --name hadoop-$HADOOP_VER_MAJOR --tgz -Phadoop-$HADOOP_VER_MAJOR -Pyarn
   assertExists $RESOURCES/$SPARK_ARCHIVE
   tar -xzf $RESOURCES/$SPARK_ARCHIVE -C $INSTALL
@@ -39,7 +39,7 @@ function installSpark {
 }
 
 function setupSpark {
-  log "set up spark"
+  logInfo "set up spark"
   cp -f $RESOURCES/spark/slaves $SPARK_CONF
   cp -f $RESOURCES/spark/spark-env.sh $SPARK_CONF
   cp -f $RESOURCES/spark/spark-defaults.conf $SPARK_CONF
@@ -49,10 +49,10 @@ function setupSpark {
 }
 
 function setupEnvVars {
-  log "set up spark environment variables"
+  logInfo "set up spark environment variables"
   cp -f $RESOURCES/spark/spark.sh /etc/profile.d/spark.sh
 
-  log "populate spark slaves file"
+  logInfo "populate spark slaves file"
   for i in $(seq $SLAVE_START_ $SLAVE_END_); do
     echo "node$i" >> $SPARK_CONF/slaves
   done
