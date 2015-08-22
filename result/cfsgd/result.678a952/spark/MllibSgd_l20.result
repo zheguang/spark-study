@@ -1,0 +1,3 @@
+edu.brown.cs.sparkstudy.MllibSgd 20 /data/devel/research/sam/Rating_S20.train 996994 20972 248944185 8
+[sam] Start training time for all iterations: 1440130829459
+[sam] End training time for all iterations: 1440131026331
