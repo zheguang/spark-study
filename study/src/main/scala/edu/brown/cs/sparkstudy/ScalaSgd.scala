@@ -53,6 +53,8 @@ object ScalaSgd {
     )
 
     def runtime = Runtime.getRuntime
+    println("[info] Run best-effort garbage collection.")
+    runtime.gc()
     println(s"[info] Used memory before training: ${(runtime.totalMemory() - runtime.freeMemory()) / mb} mb")
 
     var gamma = 0.001

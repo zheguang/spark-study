@@ -15,7 +15,6 @@ function get_java_opts {
   #mem_opts="-server -XX:+HeapDumpOnOutOfMemoryError -XX:ErrorFile=$dump_dir/hs_err_pid.log -XX:HeapDumpPath=$dump_dir"
   #gc_opts="-XX:+PrintFlagsFinal -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution -XX:+UnlockDiagnosticVMOptions -XX:+G1SummarizeConcMark -XX:+PrintAdaptiveSizePolicy -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=100"
   #gc_opts="-XX:NewSize=20g -XX:+PrintFlagsFinal -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution"
-  #gc_opts="-XX:+PrintFlagsFinal"
 
   echo "$mem_opts $gc_opts"
 }

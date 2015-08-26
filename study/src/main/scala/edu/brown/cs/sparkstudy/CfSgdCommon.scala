@@ -63,9 +63,10 @@ object CfSgdCommon {
   }
 
   def readRatingsBreeze(filename: String, num_ratings: Int): Array[Edge] ={
-    Source.fromFile(filename).getLines().take(num_ratings).map { line =>
+    Source.fromFile(filename).getLines().map { line =>
       val e = line.split(" ").map(_.toInt)
-      EdgeBreeze(e(0), e(1), e(2)).asInstanceOf[Edge]
+      //EdgeBreeze(e(0), e(1), e(2)).asInstanceOf[Edge]
+      SimpleEdge(e(0), e(1), e(2)).asInstanceOf[Edge]
     }.toArray
   }
 
@@ -107,14 +108,14 @@ object CfSgdCommon {
     }
 
     val tiles_table_ = Array.tabulate(num_tiles_x * num_tiles_y) {
-      _ => new ArrayBuffer[T]
+      _ => mutable.ArrayBuilder.make[T]
     }
     var i = 0
     while (i < edges.length) {
-      tiles_table_(hash(edges(i))).append(filler(i))
+      tiles_table_(hash(edges(i))) += filler(i)
       i += 1
     }
-    tiles_table_.map(b => Tile(b.toArray))
+    tiles_table_.map(b => Tile(b.result()))
   }
 
   def toEdgeTileRdds(edgePartitionTiles: Array[Array[Edge]], sc: SparkContext): Array[RDD[Edge]] = {

@@ -238,6 +238,8 @@ public class JavaSgdSingleNodeTiles {
         }
 
         Runtime runtime = Runtime.getRuntime();
+        System.out.println("[info] Run best-effort garbage collection.");
+        runtime.gc();
         System.out.printf("[info] Used memory before training: %d\n", (runtime.totalMemory() - runtime.freeMemory()) / mb);
         // training
         double GAMMA = 0.001;

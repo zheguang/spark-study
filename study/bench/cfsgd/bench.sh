@@ -9,19 +9,19 @@ study=$spark_study/study
 
 declare -A dataFiles
 dataFiles=(["actual"]=/data/devel/research/sam/Rating_S20.train ["test"]=$study/src/main/cc/ratings_u10_v9.dat)
-mode="test"
+mode="actual"
 
 latent=20
 
-#nusers=996994
-#nmovies=20972
-#nratings=248944185
-#nthreads=8
+nusers=996994
+nmovies=20972
+nratings=248944185
+nthreads=8
 
-nusers=1024
-nmovies=512
-nratings=524288
-nthreads=4
+#nusers=1024
+#nmovies=512
+#nratings=524288
+#nthreads=4
 
 args="$latent ${dataFiles[$mode]} $nusers $nmovies $nratings $nthreads"
 
@@ -34,9 +34,9 @@ function jvm_compile {
 
 function bench_scala {
   logInfo "bench scala"
-  class=edu.brown.cs.sparkstudy.ScalaSgd
-  scala -cp $jar $class none $args > $BENCH_CFSGD/sgd_scala.result
-  scala -cp $jar $class dotptime $args >$BENCH_CFSGD/sgd_scala_dotptime.result
+  #class=edu.brown.cs.sparkstudy.ScalaSgd
+  #scala -cp $jar $class none $args > $BENCH_CFSGD/sgd_scala.result
+  #scala -cp $jar $class dotptime $args >$BENCH_CFSGD/sgd_scala_dotptime.result
 
   class=edu.brown.cs.sparkstudy.BreezeSgd
   scala -cp $jar $class none $args > $BENCH_CFSGD/sgd_breeze.result
@@ -77,7 +77,7 @@ java_opts_=$(get_java_opts)
 export JAVA_OPTS=$java_opts_
 logInfo "set java opts=$JAVA_OPTS"
 bench_scala
-bench_java
+#bench_java
 export JAVA_OPTS=$old_java_opts
 logInfo "restore java opts=$JAVA_OPTS"
 

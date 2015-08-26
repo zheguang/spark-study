@@ -55,6 +55,8 @@ object BreezeSgd {
     val tiles_mat = new DenseMatrix(num_tiles_x, num_tiles_y, tiles)
 
     def runtime = Runtime.getRuntime
+    println("[info] Run best-effort garbage collection.")
+    runtime.gc()
     println(s"[info] Used memory before training: ${(runtime.totalMemory() - runtime.freeMemory()) / mb}")
     train(algebran, num_procs, num_nodes, user_movie_ratings, U_mat, V_mat, num_latent, tiles_mat)
     println(s"[info] Used memory after training: ${(runtime.totalMemory() - runtime.freeMemory()) / mb}")
