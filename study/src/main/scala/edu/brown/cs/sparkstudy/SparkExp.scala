@@ -1,39 +1,86 @@
 package edu.brown.cs.sparkstudy
 
-import org.apache.spark.rdd.RDD
-import org.apache.spark.{SparkConf, SparkContext}
+import java.lang.management.ManagementFactory
 
-import scala.collection.mutable.ArrayBuffer
+import org.apache.spark.rdd.RDD
+import org.apache.spark.{RangePartitioner, HashPartitioner, SparkConf, SparkContext}
+
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.parallel.immutable.ParVector
 import scala.concurrent.forkjoin.ForkJoinPool
 
 object SparkExp {
 
-  val params_ = Array("<array_size>", "<parallel_level>")
-  val sc = new SparkContext(new SparkConf().setAppName("Exp").setMaster("local[2]"))
-
   def main(args: Array[String]) = {
-    if (args.length < params_.length) {
-      printUsage()
-      System.exit(123)
-    }
-    val array_size = args(0).toInt
-    val parallel_level = args(1).toInt
-
-    consume(scalarMultiplicationScala(array_size, parallel_level))
-    consume(scalarMultiplicationSpark(sc, array_size, parallel_level))
-
-    val rows = 3
+    val sc = new SparkContext(new SparkConf())
     val cols = 4
-    val u_mat = sc.makeRDD(Array.tabulate[Double](rows, cols)((i, j) => i + j))
-    val v_mat = sc.makeRDD(Array.tabulate[Double](rows, cols)((i, j) => i - j))
-    val result = matrixMultiply_v1(rows, cols, u_mat, v_mat)
+    val parters = Array(
+      new HashPartitioner(3),
+      new HashPartitioner(2)
+    )
+    val u = sc.textFile("file:///devel/spark-study/u.input").map {
+      line =>
+        val xs = line.split(" ")
+        (xs(0), xs.drop(0))
+    }
+      //.partitionBy(parters(0))
+      .setName("u") .cache()
+    /*val u = sc.makeRDD(Seq(
+      (10, Array.tabulate[Double](cols)(x => x * 2)),
+      (11, Array.tabulate[Double](cols)(x => x * 2 + 10)),
+      (12, Array.tabulate[Double](cols)(x => x * 2 + 100))
+    )) .partitionBy(new HashPartitioner(3))
+    .setName("u").cache()*/
+
+    val v = sc.textFile("file:///devel/spark-study/v.input").map {
+      line =>
+        val xs = line.split(" ")
+        (xs(0), xs.drop(0))
+    }
+      //.partitionBy(parters(0))
+      .setName("v") .cache()
+    /*val v = sc.makeRDD(Seq(
+      (10, Array.tabulate[Double](cols)(x => x * 2 + 1)),
+      (11, Array.tabulate[Double](cols)(x => x * 2 + 1 + 10)),
+      (12, Array.tabulate[Double](cols)(x => x * 2 + 1 + 100)),
+      (10, Array.tabulate[Double](cols)(x => x * 2 + 1 + 1000))
+    )) .partitionBy(new HashPartitioner(3))
+    .setName("v").cache()*/
+
+    /*val w = sc.makeRDD(Seq(
+      (10, Array.tabulate[Double](cols)(x => x * 2 + 1)),
+      (11, Array.tabulate[Double](cols)(x => x * 2 + 1 + 10)),
+      (12, Array.tabulate[Double](cols)(x => x * 2 + 1 + 100)),
+      (10, Array.tabulate[Double](cols)(x => x * 2 + 1 + 1000))
+    )) .partitionBy(new HashPartitioner(3))
+      .setName("v").cache()*/
 
 
+    def getProcessInfo = {
+      s"${ManagementFactory.getRuntimeMXBean.getName}.${Thread.currentThread().getId}"
+    }
+
+    println(s"driver: $getProcessInfo}")
+
+    //u.foreachPartition(xs => { println(s"partition[$getProcessInfo]: ${xs.foldLeft("")((result, x) => result ++ " " ++ stringify(x._2))}") })
+    //v.foreachPartition(xs => { println(s"partition[$getProcessInfo]: ${xs.foldLeft("")((result, x) => result ++ " " ++ stringify(x._2))}") })
+    //u.foreach(x => { println(s"partition[$getProcessInfo]: ${stringify(x._2)}") })
+    //v.foreach(x => { println(s"partition[$getProcessInfo]: ${stringify(x._2)}") })
+    //w.foreachPartition(xs => { println(s"partition[$getProcessInfo]: ${xs.foldLeft("")((result, x) => result ++ " " ++ stringify(x._2))}") })
+    u.count()
+    v.count()
+
+    // to shuffle or not to shuffle?
+    val joined = u.join(
+      v //, parters(0)
+    ).setName("joined1").cache()
+    joined.foreachPartition(xs => { println(s"partition[$getProcessInfo]: ${xs.foldLeft("")((result, x) => result ++ " " ++ stringify(x._2._1) ++ ", " ++ stringify(x._2._2))}") })
+    //joined.foreach(x => { println(s"partition[$getProcessInfo]: ${stringify(x._2._1) ++ ", " ++ stringify(x._2._2)}") })
+
+    sc.stop()
   }
 
-  def matrixMultiply_v1(rows: Int, cols: Int, u_mat: RDD[Array[Double]], v_mat: RDD[Array[Double]]): RDD[Array[Double]] = {
+  def matrixMultiply_v1(sc: SparkContext, rows: Int, cols: Int, u_mat: RDD[Array[Double]], v_mat: RDD[Array[Double]]): RDD[Array[Double]] = {
     val product = u_mat.cartesian(v_mat).map { case (u, v) =>
       var result = 0.0
       var i = 0
@@ -77,8 +124,10 @@ object SparkExp {
     xs_scaled.collect()
   }
 
-  def printUsage(): Unit = {
-    printf("Usage: SparkExp %s\n", params_.foldLeft("")((result, x) => result + x))
+  def stringify[T](xs: Array[T]): String = {
+    "[" ++ xs.foldLeft("") { (result, x) =>
+      result + " " + x.toString
+    } ++ "]"
   }
 
   def consume(xs: Array[Double]): Unit = {

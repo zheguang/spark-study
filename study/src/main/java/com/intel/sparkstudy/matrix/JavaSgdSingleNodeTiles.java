@@ -5,10 +5,7 @@ import com.github.fommil.netlib.BLAS;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static java.lang.Integer.parseInt;
@@ -24,6 +21,7 @@ public class JavaSgdSingleNodeTiles {
     static final double MINVAL = -1e+100;
     static final double LAMBDA = 0.001;
     static final double STEP_DEC = 0.9;
+    static final int mb = 1024 * 1024;
 
     static class Edge {
         final int user;
@@ -40,16 +38,33 @@ public class JavaSgdSingleNodeTiles {
     static abstract class Algebran {
         abstract double dotP(int vectorLen, double[] u_mat, int u_start, double[] v_mat, int v_start);
 
-        static Algebran of(String mode) {
+        static Algebran of(String measure, String mode) {
             switch (mode.toLowerCase()) {
                 case "java":
-                    return new JavaAlgebran();
+                    switch (measure.toLowerCase()) {
+                        case "none":
+                            return new JavaAlgebran();
+                        case "dotptime":
+                            return new TimerJavaAlgebran();
+                        default:
+                            throw new RuntimeException("Unsupported: " + measure);
+                    }
                 case "blas":
-                    return new BlasAlgebran();
+                    switch (measure.toLowerCase()) {
+                        case "none":
+                            return new BlasAlgebran();
+                        case "dotptime":
+                            return new TimerBlasAlgebran();
+                        default:
+                            throw new RuntimeException("Unsupported: " + measure);
+                    }
                 default:
                     throw new SparkStudyError("Unsupported dot product mode: " + mode);
             }
         }
+
+        abstract List<Long> getTimes();
+        abstract void clear();
     }
 
     static class JavaAlgebran extends Algebran {
@@ -61,12 +76,78 @@ public class JavaSgdSingleNodeTiles {
             }
             return result;
         }
+
+        @Override
+        List<Long> getTimes() {
+            throw new RuntimeException("Not implemented");
+        }
+
+        @Override
+        void clear() {
+            throw new RuntimeException("Not implemented");
+        }
+    }
+
+    static class TimerJavaAlgebran extends JavaAlgebran {
+        ConcurrentHashMap<Long, Long> timers = new ConcurrentHashMap<>();
+        @Override
+        double dotP(int vectorLen, double[] u_mat, int u_start, double[] v_mat, int v_start) {
+            long start = System.currentTimeMillis();
+            double result = super.dotP(vectorLen, u_mat, u_start, v_mat, v_start);
+            long end = System.currentTimeMillis();
+            long tid = Thread.currentThread().getId();
+            timers.put(tid, timers.getOrDefault(tid, 0l) + end - start);
+            return result;
+        }
+
+        @Override
+        List<Long> getTimes() {
+            return new ArrayList<>(timers.values());
+        }
+
+        @Override
+        void clear() {
+            timers.clear();
+        }
     }
 
     static class BlasAlgebran extends Algebran {
         @Override
         double dotP(int vectorLen, double[] u_mat, int u_start, double[] v_mat, int v_start) {
             return BLAS.getInstance().ddot(vectorLen, u_mat, u_start, 1, v_mat, v_start, 1);
+        }
+
+        @Override
+        List<Long> getTimes() {
+            throw new RuntimeException("Not implemented");
+        }
+
+        @Override
+        void clear() {
+            throw new RuntimeException("Not implemented");
+        }
+    }
+
+    static class TimerBlasAlgebran extends BlasAlgebran {
+        ConcurrentHashMap<Long, Long> timers = new ConcurrentHashMap<>();
+        @Override
+        double dotP(int vectorLen, double[] u_mat, int u_start, double[] v_mat, int v_start) {
+            long start = System.currentTimeMillis();
+            double result = super.dotP(vectorLen, u_mat, u_start, v_mat, v_start);
+            long end = System.currentTimeMillis();
+            long tid = Thread.currentThread().getId();
+            timers.put(tid, timers.getOrDefault(tid, 0l) + end - start);
+            return result;
+        }
+
+        @Override
+        List<Long> getTimes() {
+            return new ArrayList<>(timers.values());
+        }
+
+        @Override
+        void clear() {
+            timers.clear();
         }
     }
 
@@ -75,14 +156,15 @@ public class JavaSgdSingleNodeTiles {
             System.err.println("Syntax: JavaSgdSingleNodeTiles [java|blas] <latent> <filename> <nusers> <nmovies> <nratings> <nthreads>");
             System.exit(123);
         }
-        final String algebra_mode = args[0];
-        final Algebran algebran = Algebran.of(algebra_mode);
-        final int NLATENT = parseInt(args[1]);
-        final String filename = args[2];
-        final int num_users = parseInt(args[3]);
-        final int num_movies = parseInt(args[4]);
-        final int num_user_movie_ratings = parseInt(args[5]);
-        final int num_procs = parseInt(args[6]);
+        final String measure = args[0].toLowerCase();
+        final String algebra_mode = args[1];
+        final Algebran algebran = Algebran.of(measure, algebra_mode);
+        final int NLATENT = parseInt(args[2]);
+        final String filename = args[3];
+        final int num_users = parseInt(args[4]);
+        final int num_movies = parseInt(args[5]);
+        final int num_user_movie_ratings = parseInt(args[6]);
+        final int num_procs = parseInt(args[7]);
         final int num_nodes = 1;
         final Edge[] user_movie_ratings = new Edge[num_user_movie_ratings];
         final Random randGen = new Random(4562727);
@@ -155,6 +237,8 @@ public class JavaSgdSingleNodeTiles {
             tilesMat.get(tile_x * numTilesOneDim + tile_y).add(i);
         }
 
+        Runtime runtime = Runtime.getRuntime();
+        System.out.printf("[info] Used memory before training: %d\n", (runtime.totalMemory() - runtime.freeMemory()) / mb);
         // training
         double GAMMA = 0.001;
         for (int itr = 0; itr < max_iter; itr++)
@@ -239,8 +323,39 @@ public class JavaSgdSingleNodeTiles {
             }
             GAMMA *= STEP_DEC;
             tend = System.currentTimeMillis();
-            System.out.printf("Time in iteration %d of sgd %f (ms)\n", itr, tend - tbegin);
+            System.out.printf("[info] Time in iteration %d of sgd %f (ms)\n", itr, tend - tbegin);
+            switch (measure.toLowerCase()) {
+                case "none":
+                    break;
+                case "dotptime":
+                    List<Long> vs = algebran.getTimes();
+                    /*switch (algebra_mode.toLowerCase()) {
+                        case "java":
+                            vs = ((TimerJavaAlgebran) algebran).getTimes();
+                            break;
+                        case "blas":
+                            vs = ((TimerBlasAlgebran) algebran).getTimes();
+                            break;
+                        default:
+                            throw new RuntimeException("unsupported");
+                    }*/
+                    long sum = 0;
+                    for (Long v : vs) {
+                        sum += v;
+                    }
+                    double avg = sum / (double) vs.size();
+                    double std = 0f;
+                    for (Long v : vs) {
+                        std += Math.pow(v - avg, 2f);
+                    }
+                    std = Math.sqrt(std / vs.size());
+                    System.out.printf("[info] dotptime avg: %f ms, std: %f ms, num threads: %d\n", avg, std, vs.size());
+
+                    algebran.clear();
+                    break;
+            }
         }
+        System.out.printf("[info] Used memory before training: %d\n", (runtime.totalMemory() - runtime.freeMemory()) / mb);
 
         // Calculate training error
         double train_err = 0;

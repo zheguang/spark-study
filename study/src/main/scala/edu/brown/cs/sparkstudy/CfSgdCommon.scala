@@ -1,20 +1,25 @@
 package edu.brown.cs.sparkstudy
 
 import java.lang.Math._
+import java.util.concurrent.{ThreadPoolExecutor, Executors, ConcurrentHashMap}
 
 import breeze.linalg.{DenseVector, DenseMatrix}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import scala.collection.parallel.ForkJoinTaskSupport
+import scala.collection.parallel.{ThreadPoolTaskSupport, ForkJoinTaskSupport}
 import scala.collection.parallel.immutable.ParRange
+import scala.concurrent.forkjoin
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.io.Source
 import scala.reflect.ClassTag
 import scala.util.Random
 
 object CfSgdCommon {
+
+  val algebrans = Map("none" -> new Algebran(), "dotptime" -> new TimerAlgebran())
 
   // TODO: create Tile data type, internally being a sparse matrix
   // When doing so, need to reserve this Array-based Tile for ScalaSgd
@@ -122,14 +127,74 @@ object CfSgdCommon {
     max(MINVAL, min(MAXVAL, x))
   }
 
-  def dotP(vector_len: Int, U_mat: Array[Double], u_start: Int, V_mat: Array[Double], v_start: Int): Double = {
-    var result = 0.0
-    var i = 0
-    while (i < vector_len) {
-      result += U_mat(u_start + i) * V_mat(v_start + i)
-      i += 1
+  class Algebran extends Serializable {
+    //val timers = collection.mutable.Map[Int, Int]
+    def dotP(vector_len: Int, U_mat: Array[Double], u_start: Int, V_mat: Array[Double], v_start: Int): Double = {
+      var result = 0.0
+      var i = 0
+      while (i < vector_len) {
+        result += U_mat(u_start + i) * V_mat(v_start + i)
+        i += 1
+      }
+      result
     }
-    result
+
+    def breezeDotP(U_mat: DenseMatrix[Double], u_idx: Int, V_mat: DenseMatrix[Double], v_idx: Int): Double = {
+      U_mat(::, u_idx) dot V_mat(::, v_idx)
+    }
+  }
+
+  class TimerAlgebran extends Algebran {
+    val timers = new ConcurrentHashMap[Long, Long]()
+
+    override def dotP(vector_len: Int, U_mat: Array[Double], u_start: Int, V_mat: Array[Double], v_start: Int): Double = {
+      val start = System.currentTimeMillis()
+      val result = super.dotP(vector_len, U_mat, u_start, V_mat, v_start)
+      val end = System.currentTimeMillis()
+      val tid = Thread.currentThread().getId
+      timers.put(tid, timers.getOrDefault(tid, 0l) + end - start)
+      result
+    }
+
+    override def breezeDotP(U_mat: DenseMatrix[Double], u_idx: Int, V_mat: DenseMatrix[Double], v_idx: Int): Double = {
+      val start = System.currentTimeMillis()
+      val result = super.breezeDotP(U_mat, u_idx, V_mat, v_idx)
+      val end = System.currentTimeMillis()
+      val tid = Thread.currentThread().getId
+      timers.put(tid, timers.getOrDefault(tid, 0l) + end - start)
+      result
+    }
+
+    def getTimes(): Array[Long] = {
+      val vs = timers.values()
+      val result = mutable.ArrayBuilder.make[Long]()
+      val iter = vs.iterator()
+      while (iter.hasNext) {
+        result += iter.next()
+      }
+      result.result()
+    }
+
+    def clear() = {
+      timers.clear()
+    }
+  }
+
+  def printDotpTimeIfNeeded(algebran: Algebran): Unit = {
+    algebran match {
+      case algebran1: TimerAlgebran =>
+        val ts = algebran1.getTimes()
+        println(s"[info] dotptime avg: ${ts.sum / ts.length} ms, std: ${Math.sqrt(ts.foldLeft(0.0)((s, x) => s + Math.pow(x - ts.sum / ts.length, 2)) / ts.length)}, number of threads: ${ts.length} ")
+      case _ =>
+    }
+  }
+
+  def resetAlgebranTimerIfNeeded(algebran: Algebran) = {
+    algebran match {
+      case algebran1: TimerAlgebran =>
+        algebran1.clear()
+      case _ =>
+    }
   }
 
   def matrixMultiply(u_mat: RDD[Array[Double]], v_mat: RDD[Array[Double]]): RDD[Double] = {
@@ -144,13 +209,14 @@ object CfSgdCommon {
     }
   }
 
-  def breezeDotP(U_mat: DenseMatrix[Double], u_idx: Int, V_mat: DenseMatrix[Double], v_idx: Int): Double = {
-    U_mat(::, u_idx) dot V_mat(::, v_idx)
-  }
+  //def breezeDotP(U_mat: DenseMatrix[Double], u_idx: Int, V_mat: DenseMatrix[Double], v_idx: Int): Double = {
+  //  U_mat(::, u_idx) dot V_mat(::, v_idx)
+  //}
 
   def parallelize(range: Range, parallel_level: Int): ParRange = {
     val result = range.par
-    result.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(parallel_level))
+    //result.tasksupport = new ThreadPoolTaskSupport(Executors.newFixedThreadPool(parallel_level).asInstanceOf[ThreadPoolExecutor]) //new ForkJoinTaskSupport(new forkjoin.ForkJoinPool(parallel_level)) //(Executors.newFixedThreadPool(parallel_level).asInstanceOf[ThreadPoolExecutor])
+    result.tasksupport = new ForkJoinTaskSupport(new forkjoin.ForkJoinPool(parallel_level))
     result
   }
 

@@ -6,18 +6,22 @@ import org.apache.spark.mllib.linalg.SparseMatrix
 
 object BreezeSgd {
 
+  val mb = 1024 * 1024
+
   def main(args: Array[String]): Unit = {
     if (args.length < argNames.length) {
       printUsage("BreezeSgd")
       System.exit(123)
     }
 
-    val num_latent = args(0).toInt
-    val filename = args(1)
-    val num_users = args(2).toInt
-    val num_movies = args(3).toInt
-    val num_user_movie_ratings = args(4).toInt
-    val num_procs = args(5).toInt
+    val measure = args(0).toLowerCase
+    val algebran = algebrans(measure)
+    val num_latent = args(1).toInt
+    val filename = args(2)
+    val num_users = args(3).toInt
+    val num_movies = args(4).toInt
+    val num_user_movie_ratings = args(5).toInt
+    val num_procs = args(6).toInt
     val num_nodes = 1
 
     println(s"nlatent=$num_latent")
@@ -50,14 +54,18 @@ object BreezeSgd {
     )
     val tiles_mat = new DenseMatrix(num_tiles_x, num_tiles_y, tiles)
 
-    train(num_procs, num_nodes, user_movie_ratings, U_mat, V_mat, num_latent, tiles_mat)
+    def runtime = Runtime.getRuntime
+    println(s"[info] Used memory before training: ${(runtime.totalMemory() - runtime.freeMemory()) / mb}")
+    train(algebran, num_procs, num_nodes, user_movie_ratings, U_mat, V_mat, num_latent, tiles_mat)
+    println(s"[info] Used memory after training: ${(runtime.totalMemory() - runtime.freeMemory()) / mb}")
 
-    computeTrainingError(num_user_movie_ratings, user_movie_ratings, U_mat, V_mat)
+    computeTrainingError(algebran, num_user_movie_ratings, user_movie_ratings, U_mat, V_mat)
   }
 
-  def train(num_procs: Int, num_nodes: Int, user_movie_ratings: Array[Edge], U_mat: DenseMatrix[Double], V_mat: DenseMatrix[Double], num_latent: Int, tiles_mat: DenseMatrix[Tile[Int]]): Unit = {
+  def train(algebran: Algebran, num_procs: Int, num_nodes: Int, user_movie_ratings: Array[Edge], U_mat: DenseMatrix[Double], V_mat: DenseMatrix[Double], num_latent: Int, tiles_mat: DenseMatrix[Tile[Int]]): Unit = {
     var gamma = 0.001
     val max_iter = 5
+    val parProcs = parallelize(0 until num_procs, num_procs)
     (0 until max_iter).foreach { itr =>
       val tbegin = System.currentTimeMillis()
       (0 until num_nodes).foreach { l =>
@@ -73,7 +81,7 @@ object BreezeSgd {
             val colsp = (0 until num_procs).map(x => (pidx1 + x) % num_procs)
 
             // This loop needs to be parallelized over cores
-            parallelize(0 until num_procs, num_procs) foreach { pidx2 =>
+            parProcs foreach { pidx2 =>
             //(0 until num_procs).foreach { pidx2 =>
               // skip k nodes worth of procs, and skip to my proc
               // tile = per proc work
@@ -92,7 +100,7 @@ object BreezeSgd {
                 val e = user_movie_ratings(i)
 
                 val pred = truncate(
-                  breezeDotP(U_mat, e.user - 1, V_mat, e.movie - 1)
+                  algebran.breezeDotP(U_mat, e.user - 1, V_mat, e.movie - 1)
                   //dotP(20, U_mat.data, (e.user - 1)*20, V_mat.data, (e.movie - 1)*20)
                 )
 
@@ -132,15 +140,17 @@ object BreezeSgd {
       }
       gamma *= STEP_DEC
       val tend = System.currentTimeMillis()
-      printf("Time in iteration %d of sgd %d (ms)\n", itr, tend - tbegin)
+      printf("[info] Time in iteration %d of sgd %d (ms)\n", itr, tend - tbegin)
+      printDotpTimeIfNeeded(algebran)
+      resetAlgebranTimerIfNeeded(algebran)
     }
   }
 
-  def computeTrainingError(num_user_movie_ratings: Int, user_movie_ratings: Array[Edge], U_mat: DenseMatrix[Double], V_mat: DenseMatrix[Double]): Unit = {
+  def computeTrainingError(algebran: Algebran, num_user_movie_ratings: Int, user_movie_ratings: Array[Edge], U_mat: DenseMatrix[Double], V_mat: DenseMatrix[Double]): Unit = {
     // Calculate training error
     val sqerrs = user_movie_ratings.par map { e =>
       val pred = truncate(
-        breezeDotP(U_mat, e.user - 1, V_mat, e.movie - 1)
+        algebran.breezeDotP(U_mat, e.user - 1, V_mat, e.movie - 1)
       )
       Math.pow(pred - e.rating, 2)
     }

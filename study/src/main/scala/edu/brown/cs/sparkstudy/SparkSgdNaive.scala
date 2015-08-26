@@ -8,7 +8,7 @@ import org.apache.spark.{Logging, SparkConf, SparkContext, HashPartitioner}
 import scala.collection.mutable
 
 object SparkSgdNaive extends Logging {
-
+/*
   def main(args: Array[String]) = {
     if (args.length < argNames.length) {
       printUsage("SparkSgd")
@@ -307,7 +307,7 @@ object SparkSgdNaive extends Logging {
       val factors = Array.fill(uniqueItems.length, factorLength)(randGen.nextDouble())
       ItemsBlock(uniqueItems, factors)
     }
-  }
+  }*/
 }
 /*package edu.brown.cs.sparkstudy
 

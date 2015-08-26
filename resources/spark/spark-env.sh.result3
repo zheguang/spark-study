@@ -46,7 +46,7 @@
 #export SPARK_WORKER_CORES=32  # num cores per worker
 export SPARK_WORKER_MEMORY=80g # memory per worker instance
 export SPARK_WORKER_INSTANCES=1 # worker instances per node
-export SPARK_DAEMON_MEMORY=80g
+#export SPARK_DAEMON_MEMORY=80g
 #export SPARK_WORKER_OPTS="-XX:NewSize=30g -XX:MaxNewSize=60g -XX:NewRatio=2 -XX:SurvivorRatio=4 -Xms120g -Xmx120g"
-export SPARK_WORKER_OPTS="-Xmn40g -Xms80g -Xmx80g"
+#export SPARK_WORKER_OPTS="-Xmn40g -Xms80g -Xmx80g"
 export SPARK_LOCAL_DIRS="/run/spark-local"

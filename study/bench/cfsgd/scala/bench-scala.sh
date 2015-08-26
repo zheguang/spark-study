@@ -32,7 +32,14 @@ function actual_bench_() {
     >&2 echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
     echo "[info] java_opts=$JAVA_OPTS"
     echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
-    scala -cp $fatJar $exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads 
+    scala -cp $fatJar $exe_path_ none $latent $datafile $nusers $nmovies $nratings $nthreads 
+    scala -cp $fatJar $exe_path_ dotptime $latent $datafile $nusers $nmovies $nratings $nthreads 
+
+    #exe_path_=edu.brown.cs.sparkstudy.ScalaSgdDotPTime
+    #>&2 echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
+    #echo "[info] java_opts=$JAVA_OPTS"
+    #echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
+    #scala -cp $fatJar $exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads 
   elif [ $mode = "breeze" ]; then
     exe_path_=edu.brown.cs.sparkstudy.BreezeSgd
     >&2 echo "$exe_path_ $latent $datafile $nusers $nmovies $nratings $nthreads"
@@ -70,7 +77,8 @@ function do_bench() {
   actual_bench_
 }
 
-modes=("scala" "breeze")
+#modes=("scala" "breeze")
+modes=("scala")
 latents=("20")
 
 func_mode="test"

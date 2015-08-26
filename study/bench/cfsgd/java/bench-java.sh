@@ -74,6 +74,11 @@ function do_bench() {
   echo "$exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
   java $JAVA_OPTS -cp $fatJar $exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads 
 
+  exe_path_=com.intel.sparkstudy.matrix.JavaSgdSingleNodeTilesDotPTime
+  >&2 echo "$exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
+  echo "$exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
+  java $JAVA_OPTS -cp $fatJar $exe_path_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads 
+
   #exe_path_dotptime_=com.intel.sparkstudy.matrix.JavaSgdSingleNodeTilesDotPTime
   #>&2 echo "$exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"
   #echo "$exe_path_dotptime_ $mode $latent $datafile $nusers $nmovies $nratings $nthreads"

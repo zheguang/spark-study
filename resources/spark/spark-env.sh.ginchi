@@ -43,7 +43,7 @@
 # - SPARK_PUBLIC_DNS, to set the public dns name of the master or workers
 
 # single node ginchi
-export SPARK_WORKER_CORES=2  # num cores per worker
-export SPARK_WORKER_MEMORY=4g # memory per worker instance
-export SPARK_WORKER_INSTANCES=1 # worker instances per node
-
+export SPARK_WORKER_CORES=1  # num cores per worker
+export SPARK_WORKER_MEMORY=1g # memory per worker instance
+export SPARK_WORKER_INSTANCES=2 # worker instances per node
+#export SPARK_DAEMON_MEMORY=128m

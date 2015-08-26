@@ -7,18 +7,22 @@ import edu.brown.cs.sparkstudy.CfSgdCommon._
 
 object ScalaSgd {
 
+  val mb = 1024 * 1024
+
   def main(args: Array[String]): Unit = {
     if (args.length < argNames.length) {
       printUsage("ScalaSgd")
       System.exit(123)
     }
 
-    val num_latent = args(0).toInt
-    val filename = args(1)
-    val num_users = args(2).toInt
-    val num_movies = args(3).toInt
-    val num_user_movie_ratings = args(4).toInt
-    val num_procs = args(5).toInt
+    val measure = args(0).toLowerCase
+    val algebran = algebrans(measure)
+    val num_latent = args(1).toInt
+    val filename = args(2)
+    val num_users = args(3).toInt
+    val num_movies = args(4).toInt
+    val num_user_movie_ratings = args(5).toInt
+    val num_procs = args(6).toInt
     val num_nodes = 1
 
     println(s"nlatent=$num_latent")
@@ -48,8 +52,12 @@ object ScalaSgd {
       num_movies
     )
 
+    def runtime = Runtime.getRuntime
+    println(s"[info] Used memory before training: ${(runtime.totalMemory() - runtime.freeMemory()) / mb} mb")
+
     var gamma = 0.001
     val max_iter = 5
+    val parProcs = parallelize(0 until num_procs, num_procs)
     (0 until max_iter).foreach { itr =>
       val tbegin = System.currentTimeMillis()
       (0 until num_nodes).foreach { l =>
@@ -64,7 +72,7 @@ object ScalaSgd {
             val colsp = (0 until num_procs).map(x => (pidx1 + x) % num_procs)
 
             // This loop needs to be parallelized over cores
-            parallelize(0 until num_procs, num_procs) foreach { pidx2 =>
+            parProcs foreach { pidx2 =>
               val v = tiles_mat(
                 rows(k) * num_procs * (num_nodes * num_procs) +
                 cols(k) * num_procs +
@@ -76,7 +84,7 @@ object ScalaSgd {
                 val e = user_movie_ratings(i)
 
                 val pred = truncate(
-                  dotP(num_latent, U_mat, (e.user - 1) * num_latent, V_mat, (e.movie - 1) * num_latent)
+                  algebran.dotP(num_latent, U_mat, (e.user - 1) * num_latent, V_mat, (e.movie - 1) * num_latent)
                   //breezeDotP(new DenseMatrix(num_latent, num_users, U_mat), e.user - 1, new DenseMatrix(num_latent, num_movies, V_mat), e.movie - 1)
                 )
 
@@ -104,13 +112,17 @@ object ScalaSgd {
       }
       gamma *= STEP_DEC
       val tend = System.currentTimeMillis()
-      printf("Time in iteration %d of sgd %d (ms)\n", itr, tend - tbegin)
+      printf("[info] Time in iteration %d of sgd %d (ms)\n", itr, tend - tbegin)
+
+      printDotpTimeIfNeeded(algebran)
+      resetAlgebranTimerIfNeeded(algebran)
     }
+    println(s"[info] Used memory after training: ${(runtime.totalMemory() - runtime.freeMemory()) / mb} mb")
 
     // Calculate training error
     val sqerrs = user_movie_ratings.map { e =>
       val pred = truncate(
-        dotP(num_latent, U_mat, (e.user - 1) * num_latent, V_mat, (e.movie - 1) * num_latent)
+        algebran.dotP(num_latent, U_mat, (e.user - 1) * num_latent, V_mat, (e.movie - 1) * num_latent)
       )
       pow(pred - e.rating, 2)
     }

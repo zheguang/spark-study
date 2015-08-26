@@ -13,8 +13,9 @@ spark.master                      spark://ginchi:7077
 spark.eventLog.enabled            true
 spark.eventLog.dir                file:///var/spark/eventLog
 spark.serializer                  org.apache.spark.serializer.KryoSerializer
-spark.driver.memory               1g
-spark.executor.extraJavaOptions    -XX:+PrintGCDetails
+spark.driver.memory               64m
+spark.executor.extraJavaOptions   -XX:+PrintFlagsFinal -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution -XX:+UnlockDiagnosticVMOptions -XX:+G1SummarizeConcMark
 spark.executor.cores              1
-spark.executor.memory             2g
+spark.executor.memory             128m
 spark.shuffle.spill               false
+spark.default.parallelism         2

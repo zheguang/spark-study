@@ -17,12 +17,14 @@ object SparkSgdIndexed extends Logging {
     }
     val sc = new SparkContext(new SparkConf())
 
-    val num_latent = args(0).toInt
-    val filePath = args(1)
-    val num_users = args(2).toInt // never used, will compute from ratings
-    val num_items = args(3).toInt // never used, will compute from ratings
-    val num_ratings = args(4).toInt // never used, will compute from ratings
-    val num_procs = args(5).toInt
+    val measure = args(0).toLowerCase
+    val algebran = algebrans(measure)
+    val num_latent = args(1).toInt
+    val filePath = args(2)
+    val num_users = args(3).toInt // never used, will compute from ratings
+    val num_items = args(4).toInt // never used, will compute from ratings
+    val num_ratings = args(5).toInt // never used, will compute from ratings
+    val num_procs = args(6).toInt
     val num_nodes = 1
 
     val data = sc.textFile(s"file://$filePath")
@@ -100,7 +102,7 @@ object SparkSgdIndexed extends Logging {
             while (i < rates.length) {
               val userFactor = usersBlock.factors(usersBlock.users(users(i)))
               val itemFactor = itemsBlock.factors(itemsBlock.items(items(i)))
-              val pred = dotP(num_latent, userFactor, 0, itemFactor, 0)
+              val pred = algebran.dotP(num_latent, userFactor, 0, itemFactor, 0)
               val err = pred - rates(i)
               (0 until num_latent).foreach { j =>
                 userFactor(j) += - gamma * (err * itemFactor(j) + LAMBDA * userFactor(j))
@@ -165,7 +167,7 @@ object SparkSgdIndexed extends Logging {
 
     println(s"[sam] usersBlocks size: $finalUsersCount, itemsBlocks size: $finalItemsCount")
     println(s"[sam] usersBlocks parts: ${usersBlocks.partitions.length}, itemsBlocks parts: ${itemsBlocks.partitions.length}")
-    val trainErr = computeTrainingError(usersBlocks, itemsBlocks, ratingsBlocks)
+    val trainErr = computeTrainingError(algebran, usersBlocks, itemsBlocks, ratingsBlocks)
     println(s"[sam] training rmse $trainErr")
     println(s"[sam] finished training for total iterations: $maxNumIters")
 
@@ -219,7 +221,7 @@ object SparkSgdIndexed extends Logging {
   }
 
   //private def computeTrainingError(usersBlocks: RDD[(UsersBlockId, UsersBlock)], itemsBlocks: RDD[(ItemsBlockId, ItemsBlock)], ratingsBlocks: RDD[((UsersBlockId, ItemsBlockId), RatingsBlockNormalized)]): Double = {
-  private def computeTrainingError(usersBlocks: RDD[(UsersBlockId, UsersBlock)], itemsBlocks: RDD[(ItemsBlockId, ItemsBlock)], ratingsBlocks: RDD[((UsersBlockId, ItemsBlockId), RatingsBlock)]): Double = {
+  private def computeTrainingError(algebran: Algebran, usersBlocks: RDD[(UsersBlockId, UsersBlock)], itemsBlocks: RDD[(ItemsBlockId, ItemsBlock)], ratingsBlocks: RDD[((UsersBlockId, ItemsBlockId), RatingsBlock)]): Double = {
     /*val usersBlockMap = usersBlocks.collectAsMap()
     val itemsBlockMap = itemsBlocks.collectAsMap()
 
@@ -268,7 +270,7 @@ object SparkSgdIndexed extends Logging {
           while (i < rates.length) {
             val userFactor = usersBlock.factors(usersBlock.users(users(i)))
             val itemFactor = itemsBlock.factors(itemsBlock.items(items(i)))
-            val pred = dotP(userFactor.length, userFactor, 0, itemFactor, 0)
+            val pred = algebran.dotP(userFactor.length, userFactor, 0, itemFactor, 0)
             sumSquaredDev += Math.pow(pred - rates(i), 2)
             i += 1
           }
