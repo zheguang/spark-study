@@ -14,23 +14,12 @@ project_root=$(dirname $0)/..
 
 rev_id=`git rev-parse --short HEAD`
 
-#######
-# cfsgd
-#######
-run_modes=("cc" "java" "scala" "spark")
-for m in ${run_modes[@]}; do
-  dest=$project_root/result/cfsgd/result.$rev_id/$m
-  echo "[info] cfsgd: cp $project_root/study/bench/cfsgd/$m/result/* $dest"
+for d in "cfsgd" "pagerank"; do
+  src=$project_root/study/bench/$d
+  dest=$project_root/result/$d/result.$rev_id
   mkdir -p $dest
-  cp $project_root/study/bench/cfsgd/$m/result/* $dest
+  echo "[info] $d: cp $project_root/study/bench/$d/*.result $dest"
+  cp $src/*.result $dest
 done
-
-######
-# pr
-######
-dest=$project_root/result/pr/result.$rev_id
-mkdir -p $dest
-echo "[info] pr: cp $project_root/study/bench/pagerank/*.result $dest"
-cp $project_root/study/bench/pagerank/*.result $dest
 
 echo "[info] done"
