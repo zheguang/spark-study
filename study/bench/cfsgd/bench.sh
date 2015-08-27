@@ -42,14 +42,16 @@ function cc_compile {
   icpc -DLATENT=$latent -DCPP -O3 -xHost -openmp $ccSrc/sgd_single_node_tiles_copyedge.cpp -o $ccBuild/sgd_cc_copyedge.out -lmkl_rt
   icpc -DLATENT=$latent -DBLAS -O3 -xHost -openmp $ccSrc/sgd_single_node_tiles_copyedge.cpp -o $ccBuild/sgd_cc_copyedge_blas.out -lmkl_rt
   icpc -DLATENT=$latent -DCPP -DDOTPTIME -O3 -xHost -openmp $ccSrc/sgd_single_node_tiles_copyedge.cpp -o $ccBuild/sgd_cc_copyedge_dotptime.out -lmkl_rt
+  icpc -DLATENT=$latent -DBLAS -DDOTPTIME -O3 -xHost -openmp $ccSrc/sgd_single_node_tiles_copyedge.cpp -o $ccBuild/sgd_cc_copyedge_blas_dotptime.out -lmkl_rt
 }
 
 function bench_cc {
   logInfo "bench cc"
-  $ccBuild/sgd_cc.out $ccArgs > $BENCH_CFSGD/sgd_cc.result
-  $ccBuild/sgd_cc_copyedge.out $ccArgs > $BENCH_CFSGD/sgd_cc_copyedge.result
+  #$ccBuild/sgd_cc.out $ccArgs > $BENCH_CFSGD/sgd_cc.result
+  #$ccBuild/sgd_cc_copyedge.out $ccArgs > $BENCH_CFSGD/sgd_cc_copyedge.result
   $ccBuild/sgd_cc_copyedge_blas.out $ccArgs > $BENCH_CFSGD/sgd_cc_copyedge_blas.result
-  $ccBuild/sgd_cc_copyedge_dotptime.out $ccArgs > $BENCH_CFSGD/sgd_cc_copyedge_dotptime.result
+  #$ccBuild/sgd_cc_copyedge_dotptime.out $ccArgs > $BENCH_CFSGD/sgd_cc_copyedge_dotptime.result
+  #$ccBuild/sgd_cc_copyedge_blas_dotptime.out $ccArgs > $BENCH_CFSGD/sgd_cc_copyedge_blas_dotptime.result
 }
 
 function bench_scala {

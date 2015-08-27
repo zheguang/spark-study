@@ -463,12 +463,13 @@ int main(int argc, char** argv) {
       avg += dotp_times_per_proc[i];
     }
     avg /= num_procs;
+    avg = avg / cpu_freq * 1000;
     double dev = 0;
     for (int i = 0; i < num_procs; i++) {
-      dev += pow(dotp_times_per_proc[i] - avg, 2);
+      dev += pow(dotp_times_per_proc[i] / cpu_freq * 1000 - avg, 2);
     }
     dev = sqrt(dev / num_procs);
-    printf("Time in iteration %ld of sgd %f (ms) dotP %f (ms) std %f (ms)\n", itr, (tend - tbegin) / cpu_freq * 1000, avg / cpu_freq * 1000, dev / cpu_freq * 1000);
+    printf("Time in iteration %ld of sgd %f (ms) dotP %f (ms) std %f (ms)\n", itr, (tend - tbegin) / cpu_freq * 1000, avg, dev);
 #else
     printf("Time in iteration %ld of sgd %f (ms)\n", itr, (tend - tbegin) / cpu_freq * 1000);
 #endif
