@@ -3,7 +3,7 @@ package edu.brown.cs.sparkstudy
 import edu.brown.cs.sparkstudy.CfSgdCommon._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.{Logging, SparkConf, SparkContext, HashPartitioner}
+import org.apache.spark._
 import org.apache.spark.util.{CollectionsUtils, Utils}
 
 import scala.collection.mutable
@@ -16,6 +16,7 @@ object SparkSgdIndexed extends Logging {
       System.exit(123)
     }
     val sc = new SparkContext(new SparkConf())
+    sc.setLogLevel("OFF")
 
     val measure = args(0).toLowerCase
     val algebran = algebrans(measure)

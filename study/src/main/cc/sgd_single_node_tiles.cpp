@@ -38,6 +38,8 @@
 #include <mkl.h>
 #endif
 
+#include "utils.h"
+
 typedef struct {
     int user;
     int movie;
@@ -270,6 +272,8 @@ int main(int argc, char** argv) {
     //               tiles[i * (num_nodes * num_procs) + j].size(),
     //               (tiles[i * (num_nodes * num_procs) + j].size()/float(num_user_movie_rating)) * 100);
 
+    printf("[info] VM usage before training: %lld (b)\n", getVmUsed());
+
     // exit(1);
     for (size_t itr = 0; itr < max_iter; itr++)
     {
@@ -448,17 +452,23 @@ int main(int argc, char** argv) {
     tend = __rdtsc();
 #endif
 #ifdef DOTPTIME
-    double dotp_time_per_itr = 0;
+    double avg = 0;
     for (int i = 0; i < num_procs; i++) {
-      dotp_time_per_itr += dotp_times_per_proc[i];
+      avg += dotp_times_per_proc[i];
     }
-    dotp_time_per_itr /= num_procs;
-    printf("Time in iteration %ld of sgd %f (ms) dotP %f (ms)\n", itr, ((tend - tbegin)/cpu_freq)* 1000, (dotp_time_per_itr) / cpu_freq * 1000);
+    avg /= num_procs;
+    double dev = 0;
+    for (int i = 0; i < num_procs; i++) {
+      dev += pow(dotp_times_per_proc[i] - avg, 2);
+    }
+    dev = sqrt(dev / num_procs);
+    printf("Time in iteration %ld of sgd %f (ms) dotP %f (ms) std %f (ms)\n", itr, (tend - tbegin) / cpu_freq * 1000, avg / cpu_freq * 1000, dev / cpu_freq * 1000);
 #else
-    printf("Time in iteration %ld of sgd %f (ms)\n", itr, ((tend - tbegin)/cpu_freq)* 1000);
+    printf("Time in iteration %ld of sgd %f (ms)\n", itr, (tend - tbegin) / cpu_freq * 1000);
 #endif
     }
 
+    printf("[info] VM usage after training: %lld (b)\n", getVmUsed());
 
     // exit(1);
     

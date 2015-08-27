@@ -15,7 +15,8 @@ spark.eventLog.dir                file:///var/spark/eventLog
 spark.serializer                  org.apache.spark.serializer.KryoSerializer
 spark.driver.memory               5g
 #spark.executor.extraJavaOptions   -XX:+PrintFlagsFinal -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution -XX:+UnlockDiagnosticVMOptions -XX:+G1SummarizeConcMark -XX:+PrintTenuringDistribution -XX:SurvivorRatio=10 -Xmn40g -XX:MetaspaceSize=100M
-spark.executor.extraJavaOptions   -XX:+PrintFlagsFinal -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution -XX:+UnlockDiagnosticVMOptions -XX:+G1SummarizeConcMark -XX:+PrintAdaptiveSizePolicy -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=100
+#spark.executor.extraJavaOptions   -XX:+PrintFlagsFinal -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution -XX:+UnlockDiagnosticVMOptions -XX:+G1SummarizeConcMark -XX:+PrintAdaptiveSizePolicy -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=100
+spark.executor.extraJavaOptions   -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=100
 spark.executor.cores              8
 spark.executor.memory             80g
 spark.shuffle.spill               false
