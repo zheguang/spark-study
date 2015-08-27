@@ -1,0 +1,23 @@
+nlatent=20
+filename=/data/devel/research/sam/Rating_S20.train
+num_users=996994
+num_movies=20972
+num_user_movie_ratings=248944185
+num_procs=8
+num_nodes=1
+Time in data read: 354284 (ms)
+Time in U-V init: 952 (ms)
+[info] Run best-effort garbage collection.
+[info] Used memory before training: 7886
+[info] Time in iteration 0 of sgd 94000 (ms)
+[info] dotptime avg: 9427 ms, std: 2290.6575748024843, number of threads: 8 
+[info] Time in iteration 1 of sgd 90821 (ms)
+[info] dotptime avg: 9372 ms, std: 2283.389722539716, number of threads: 8 
+[info] Time in iteration 2 of sgd 91095 (ms)
+[info] dotptime avg: 9445 ms, std: 2359.8417584660206, number of threads: 8 
+[info] Time in iteration 3 of sgd 88687 (ms)
+[info] dotptime avg: 9243 ms, std: 1972.802099806263, number of threads: 8 
+[info] Time in iteration 4 of sgd 87223 (ms)
+[info] dotptime avg: 9199 ms, std: 1844.2746541662389, number of threads: 8 
+[info] Used memory after training: 12610
+Training rmse 0.431724

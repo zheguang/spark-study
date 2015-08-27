@@ -1,0 +1,18 @@
+nlatent=20
+filename=/data/devel/research/sam/Rating_S20.train
+num_users=996994
+num_movies=20972
+num_user_movie_ratings=248944185
+num_procs=8
+num_nodes=1
+Time in data read: 306588 (ms)
+Time in U-V init: 668 (ms)
+[info] Run best-effort garbage collection.
+[info] Used memory before training: 7820 mb
+[info] Time in iteration 0 of sgd 10659 (ms)
+[info] Time in iteration 1 of sgd 9604 (ms)
+[info] Time in iteration 2 of sgd 9674 (ms)
+[info] Time in iteration 3 of sgd 9655 (ms)
+[info] Time in iteration 4 of sgd 9893 (ms)
+[info] Used memory after training: 9645 mb
+Training rmse 0.492332

@@ -1,0 +1,19 @@
+algebra_mode=java
+nlatent=20
+filename=/data/devel/research/sam/Rating_S20.train
+num_users=996994
+num_movies=20972
+num_user_movie_ratings=248944185
+num_procs=8
+num_nodes=1
+Time in data read: 831162.000000 (ms)
+Time in U-V init: 696.000000 (ms)
+[info] Run best-effort garbage collection.
+[info] Used memory before training: 11784
+[info] Time in iteration 0 of sgd 8614.000000 (ms)
+[info] Time in iteration 1 of sgd 8433.000000 (ms)
+[info] Time in iteration 2 of sgd 8353.000000 (ms)
+[info] Time in iteration 3 of sgd 8251.000000 (ms)
+[info] Time in iteration 4 of sgd 8314.000000 (ms)
+[info] Used memory before training: 12484
+Training rmse 0.492332

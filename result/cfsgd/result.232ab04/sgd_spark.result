@@ -1,0 +1,6 @@
+[sam] init: ratings count: 248944185, numUserBlocks: 8, numItemBlocks: 8
+[sam] Time in iterations of sgd 24115 (ms)
+[sam] usersBlocks size: 8, itemsBlocks size: 8
+[sam] usersBlocks parts: 8, itemsBlocks parts: 8
+[sam] training rmse 0.4434277266426857
+[sam] finished training for total iterations: 5

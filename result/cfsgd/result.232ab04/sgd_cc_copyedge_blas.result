@@ -1,0 +1,18 @@
+algebra_mode=BLAS
+nlatent=20
+filename=/data/devel/research/sam/Rating_S20.train
+num_users=996994
+num_movies=20972
+num_user_movie_rating=248944185
+num_procs=8
+num_nodes=1
+Time in data read 71667.712850 (ms)
+Time in U-V mat init 261.137397 (ms)
+[info] VM usage before training: 12213047296 (b)
+Time in iteration 0 of sgd 2741.662533 (ms)
+Time in iteration 1 of sgd 2704.740867 (ms)
+Time in iteration 2 of sgd 2794.119993 (ms)
+Time in iteration 3 of sgd 2805.886332 (ms)
+Time in iteration 4 of sgd 2747.556502 (ms)
+[info] VM usage after training: 12226449408 (b)
+Training rmse 0.253060
