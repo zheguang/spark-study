@@ -69,7 +69,7 @@ function start_sock {
   fi
 
   echo "[info] start sock"
-  ssh -N -D 1080 $gateway -v &>/tmp/ssh-intel.log &
+  yes | ssh -N -D 1080 $gateway -v &>/tmp/ssh-intel.log &
   sock_pid=$!
   status_=$?
   if [ $status_ -eq 0 ]; then

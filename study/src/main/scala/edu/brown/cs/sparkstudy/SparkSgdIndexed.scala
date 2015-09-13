@@ -69,7 +69,6 @@ object SparkSgdIndexed extends Logging {
     }
 
     var iter = 0
-    //var previousUirBlockUpdated: RDD[((UsersBlockId, ItemsBlockId), (UsersBlock, ItemsBlock))] = null
     val previousUirBlocks = mutable.ArrayBuilder.make[RDD[((UsersBlockId, ItemsBlockId), (UsersBlock, ItemsBlock))]]
     while (iter < maxNumIters) {
       var round = 0
@@ -78,22 +77,16 @@ object SparkSgdIndexed extends Logging {
 
         val uirBlocksInRound = itemsBlocks.keyBy {
           case (itemsBlockId, _) =>
-            //(itemsBlockId + round) % numDiagnalRounds
             (itemsBlockId + round * (numDiagnalRounds - 1)) % numDiagnalRounds
         }.setName(s"I.keyBy(i$iter)(r$round)")
-          //.partitionBy(new HashPartitioner(userPart.numPartitions)) // unless join is hash-join, need partitionBy for avoiding nested loop join.
-          //.setName(s"I.keyBy.PartitionBy(i$iter)(r$round)")
-          .join(usersBlocks, new HashPartitioner(userPart.numPartitions)) //usersBlocks.partitioner.get
+          .join(usersBlocks, new HashPartitioner(userPart.numPartitions))
           .setName(s"I.join(U)(i$iter)(r$round)")
           .map {
-          case (usersBlockId, ((itemsBlockId, itemsBlock), usersBlock)) => // pipelined with join, rather than wait for entire partition to be ready as in mapPartition
+          case (usersBlockId, ((itemsBlockId, itemsBlock), usersBlock)) =>
             ((usersBlockId, itemsBlockId), (usersBlock, itemsBlock))
         }.setName(s"I.join(U).map(i$iter)(r$round)")
-          //.partitionBy(ratingsBlocks.partitioner.get)
           .join(ratingsBlocksInRound, ratingsBlocks.partitioner.get)
           .setName(s"I.join(U, R).map.join(i$iter)(r$round)")
-
-        //println(s"[sam][debug] uriBlocksInRound count: ${uirBlocksInRound.count()}")
 
         val uirBlocksInRoundUpdated = uirBlocksInRound.mapValues {
           case ((usersBlock, itemsBlock), RatingsBlock(users, items, rates)) =>
@@ -116,38 +109,25 @@ object SparkSgdIndexed extends Logging {
           .persist(StorageLevel.MEMORY_ONLY)
 
         // update usersBlocks and itemsBlocks with counterparts in uriBlocks
-        /*usersBlocks = uirBlocksInRoundUpdated.mapPartitions({
-          x => x.map {
-            case ((usersBlockId, _), (usersBlock, _)) => (usersBlockId, usersBlock)
-          }
-        }, true)*/
-        //assert (uirBlocksInRoundUpdated.partitioner == ratingsBlocks.partitioner)
         usersBlocks = uirBlocksInRoundUpdated.mapPartitions({
           x => x.map {
             case ((usersBlockId, _), (usersBlock, _)) => (usersBlockId, usersBlock)
           }
         }, true)
-        //.partitionBy(new HashPartitioner(userPart.numPartitions))
         usersBlocks.setName(s"U(i$iter)(r$round)")
 
         itemsBlocks = uirBlocksInRoundUpdated.map {
           case ((_, itemsBlockId), (_, itemsBlock)) => (itemsBlockId, itemsBlock)
-        } //.partitionBy(new HashPartitioner(itemPart.numPartitions))*/
+        }
         itemsBlocks.setName(s"I(i$iter(r$round)")
 
         previousUirBlocks += uirBlocksInRoundUpdated
-        // clean up
-        //if (previousUirBlockUpdated != null) {
-        //  previousUirBlockUpdated.unpersist(false)
-        //}
-        //previousUirBlockUpdated = uirBlocksInRoundUpdated
 
         round += 1
       }
       gamma *= STEP_DEC
       iter += 1
     }
-    //previousUirBlockUpdated.unpersist(false)
 
     // materialize results
     usersBlocks.persist(StorageLevel.MEMORY_ONLY)
@@ -175,7 +155,10 @@ object SparkSgdIndexed extends Logging {
     sc.stop()
   }
 
-  private def makeFactorsBlocks(userPart: HashPartitioner, itemPart: HashPartitioner, ratingsBlocks: RDD[((UsersBlockId, ItemsBlockId), RatingsBlock)], num_latent: Int): (RDD[(UsersBlockId, UsersBlock)], RDD[(ItemsBlockId, ItemsBlock)]) = {
+  private def makeFactorsBlocks(userPart: HashPartitioner,
+                                itemPart: HashPartitioner,
+                                ratingsBlocks: RDD[((UsersBlockId, ItemsBlockId), RatingsBlock)],
+                                num_latent: Int): (RDD[(UsersBlockId, UsersBlock)], RDD[(ItemsBlockId, ItemsBlock)]) = {
     // aggregate by user-block ids to create user blocks, each with unique user
     // ids that are shared across different item blocks
     val usersBlocks = ratingsBlocks.map {

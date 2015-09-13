@@ -17,8 +17,9 @@ object GraphxPageRank extends Logging {
     val iters = args(1).toInt
     val sparkConf = new SparkConf()
     val sc = new SparkContext(new SparkConf())
+    sc.setLogLevel("OFF")
 
-    val numEPart = 2
+    val numEPart = 8
     val edgeStorageLevel = StorageLevel.MEMORY_ONLY
     val vertexStorageLevel = StorageLevel.MEMORY_ONLY
     val partitionStrategy = PartitionStrategy.fromString("RandomVertexCut")

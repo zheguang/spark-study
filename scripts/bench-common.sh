@@ -16,7 +16,7 @@ function get_java_opts {
   #gc_opts="-XX:+PrintFlagsFinal -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution -XX:+UnlockDiagnosticVMOptions -XX:+G1SummarizeConcMark -XX:+PrintAdaptiveSizePolicy -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=100"
   #gc_opts="-XX:NewSize=20g -XX:+PrintFlagsFinal -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution"
 
-  #mem_opts="-Xms80g -Xmx80g"
+  mem_opts="-Xms80g -Xmx80g"
   #gc_opts="-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=100"
 
   echo "$mem_opts $gc_opts"

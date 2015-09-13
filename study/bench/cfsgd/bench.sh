@@ -47,22 +47,22 @@ function cc_compile {
 
 function bench_cc {
   logInfo "bench cc"
-  #$ccBuild/sgd_cc.out $ccArgs > $BENCH_CFSGD/sgd_cc.result
-  #$ccBuild/sgd_cc_copyedge.out $ccArgs > $BENCH_CFSGD/sgd_cc_copyedge.result
+  $ccBuild/sgd_cc.out $ccArgs > $BENCH_CFSGD/sgd_cc.result
+  $ccBuild/sgd_cc_copyedge.out $ccArgs > $BENCH_CFSGD/sgd_cc_copyedge.result
   $ccBuild/sgd_cc_copyedge_blas.out $ccArgs > $BENCH_CFSGD/sgd_cc_copyedge_blas.result
-  #$ccBuild/sgd_cc_copyedge_dotptime.out $ccArgs > $BENCH_CFSGD/sgd_cc_copyedge_dotptime.result
+  $ccBuild/sgd_cc_copyedge_dotptime.out $ccArgs > $BENCH_CFSGD/sgd_cc_copyedge_dotptime.result
   #$ccBuild/sgd_cc_copyedge_blas_dotptime.out $ccArgs > $BENCH_CFSGD/sgd_cc_copyedge_blas_dotptime.result
 }
 
 function bench_scala {
   logInfo "bench scala"
-  #class=edu.brown.cs.sparkstudy.ScalaSgd
-  #scala -cp $jar $class none $jArgs > $BENCH_CFSGD/sgd_scala.result
+  class=edu.brown.cs.sparkstudy.ScalaSgd
+  scala -cp $jar $class none $jArgs > $BENCH_CFSGD/sgd_scala.result
   #scala -cp $jar $class dotptime $jArgs >$BENCH_CFSGD/sgd_scala_dotptime.result
 
-  class=edu.brown.cs.sparkstudy.BreezeSgd
-  scala -cp $jar $class none $jArgs > $BENCH_CFSGD/sgd_breeze.result
-  scala -cp $jar $class dotptime $jArgs >$BENCH_CFSGD/sgd_breeze_dotptime.result
+  #class=edu.brown.cs.sparkstudy.BreezeSgd
+  #scala -cp $jar $class none $jArgs > $BENCH_CFSGD/sgd_breeze.result
+  #scala -cp $jar $class dotptime $jArgs >$BENCH_CFSGD/sgd_breeze_dotptime.result
 }
 
 function bench_java {
@@ -71,8 +71,8 @@ function bench_java {
   java $JAVA_OPTS -cp $jar $class none java $jArgs > $BENCH_CFSGD/sgd_java.result
   java $JAVA_OPTS -cp $jar $class dotptime java $jArgs > $BENCH_CFSGD/sgd_java_dotptime.result
 
-  java $JAVA_OPTS -cp $jar $class none blas $jArgs > $BENCH_CFSGD/sgd_blas.result
-  java $JAVA_OPTS -cp $jar $class dotptime blas $jArgs > $BENCH_CFSGD/sgd_blas_dotptime.result
+  #java $JAVA_OPTS -cp $jar $class none blas $jArgs > $BENCH_CFSGD/sgd_blas.result
+  #java $JAVA_OPTS -cp $jar $class dotptime blas $jArgs > $BENCH_CFSGD/sgd_blas_dotptime.result
 }
 
 function bench_spark {
@@ -90,19 +90,19 @@ function bench_spark {
   #/usr/local/spark/bin/spark-submit --name $name --class $class $jar $jArgs 1> $BENCH_CFSGD/sgd_mllib.result 2>/tmp/samrun
 }
 
-source /opt/intel/bin/compilervars.sh intel64
-cc_compile
-bench_cc
+#source /opt/intel/bin/compilervars.sh intel64
+#cc_compile
+#bench_cc
 
-#jvm_compile
-#bench_spark
-#
+jvm_compile
+bench_spark
+
 #old_java_opts=$JAVA_OPTS
 #java_opts_=$(get_java_opts)
 #export JAVA_OPTS=$java_opts_
 #logInfo "set java opts=$JAVA_OPTS"
 #bench_scala
-#bench_java
+##bench_java
 #export JAVA_OPTS=$old_java_opts
 #logInfo "restore java opts=$JAVA_OPTS"
 
