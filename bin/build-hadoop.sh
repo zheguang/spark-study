@@ -7,8 +7,11 @@ else
   source $(dirname $0)/../scripts/common.sh
 fi
 
+# See hadoop/BUILDING.txt
+export Platform=x64
+
 function buildHadoop {
-  log "build hadoop"
+  logInfo "build hadoop"
   $LOCAL_PROJECT/third_party/spark/build/mvn clean package -DskipTests -Dtar -Pdist,native
 }
 
