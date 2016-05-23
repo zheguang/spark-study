@@ -1,0 +1,11 @@
+{
+  "id" : "application_1463950319954_0001",
+  "name" : "graphx_pargerank",
+  "attempts" : [ {
+    "attemptId" : "1",
+    "startTime" : "2016-05-22T20:56:36.639GMT",
+    "endTime" : "2016-05-22T21:24:57.750GMT",
+    "sparkUser" : "hadoop",
+    "completed" : true
+  } ]
+}

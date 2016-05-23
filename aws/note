@@ -1,0 +1,11 @@
+aws emr create-cluster \
+  --applications Name=Ganglia Name=Spark \
+  --ec2-attributes '{"KeyName":"samzhao","InstanceProfile":"EMR_EC2_DefaultRole","SubnetId":"subnet-97f974f2","EmrManagedSlaveSecurityGroup":"sg-8aceb1ee","EmrManagedMasterSecurityGroup":"sg-89ceb1ed"}' \
+  --service-role EMR_DefaultRole \
+  --enable-debugging \
+  --release-label emr-4.6.0 \
+  --log-uri 's3n://aws-logs-440909972617-us-west-2/elasticmapreduce/' \
+  --name 'Closing the gap: graphx' \
+  --instance-groups '[{"InstanceCount":1,"InstanceGroupType":"MASTER","InstanceType":"c3.4xlarge","Name":"Master Instance Group"},{"InstanceCount":2,"InstanceGroupType":"CORE","InstanceType":"c3.4xlarge","Name":"Core Instance Group"}]' \
+  --configurations '[{"Classification":"spark","Properties":{"maximizeResourceAllocation":"true"},"Configurations":[]}]' \
+  --region us-west-2\

@@ -1,0 +1,278 @@
+[ {
+  "status" : "COMPLETE",
+  "stageId" : 3,
+  "attemptId" : 0,
+  "numActiveTasks" : 0,
+  "numCompleteTasks" : 10,
+  "numFailedTasks" : 0,
+  "executorRunTime" : 6,
+  "inputBytes" : 995557448,
+  "inputRecords" : 10,
+  "outputBytes" : 0,
+  "outputRecords" : 0,
+  "shuffleReadBytes" : 0,
+  "shuffleReadRecords" : 0,
+  "shuffleWriteBytes" : 0,
+  "shuffleWriteRecords" : 0,
+  "memoryBytesSpilled" : 0,
+  "diskBytesSpilled" : 0,
+  "name" : "reduce at EdgeRDDImpl.scala:89",
+  "details" : "org.apache.spark.rdd.RDD.reduce(RDD.scala:1007)\norg.apache.spark.graphx.impl.EdgeRDDImpl.count(EdgeRDDImpl.scala:89)\nGraphXPageRank$.main(graphx_pagerank.scala:16)\nGraphXPageRank.main(graphx_pagerank.scala)\nsun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\nsun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)\nsun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\njava.lang.reflect.Method.invoke(Method.java:606)\norg.apache.spark.deploy.yarn.ApplicationMaster$$anon$2.run(ApplicationMaster.scala:542)",
+  "schedulingPool" : "default",
+  "accumulatorUpdates" : [ ],
+  "tasks" : {
+    "32" : {
+      "taskId" : 32,
+      "index" : 2,
+      "attempt" : 0,
+      "launchTime" : "2016-05-22T20:58:22.062GMT",
+      "executorId" : "1",
+      "host" : "ip-172-31-17-133.us-west-2.compute.internal",
+      "taskLocality" : "PROCESS_LOCAL",
+      "speculative" : false,
+      "accumulatorUpdates" : [ ],
+      "taskMetrics" : {
+        "executorDeserializeTime" : 32,
+        "executorRunTime" : 2,
+        "resultSize" : 2195,
+        "jvmGcTime" : 0,
+        "resultSerializationTime" : 0,
+        "memoryBytesSpilled" : 0,
+        "diskBytesSpilled" : 0,
+        "inputMetrics" : {
+          "bytesRead" : 105411144,
+          "recordsRead" : 1
+        }
+      }
+    },
+    "35" : {
+      "taskId" : 35,
+      "index" : 5,
+      "attempt" : 0,
+      "launchTime" : "2016-05-22T20:58:22.065GMT",
+      "executorId" : "1",
+      "host" : "ip-172-31-17-133.us-west-2.compute.internal",
+      "taskLocality" : "PROCESS_LOCAL",
+      "speculative" : false,
+      "accumulatorUpdates" : [ ],
+      "taskMetrics" : {
+        "executorDeserializeTime" : 30,
+        "executorRunTime" : 0,
+        "resultSize" : 2195,
+        "jvmGcTime" : 0,
+        "resultSerializationTime" : 0,
+        "memoryBytesSpilled" : 0,
+        "diskBytesSpilled" : 0,
+        "inputMetrics" : {
+          "bytesRead" : 101286160,
+          "recordsRead" : 1
+        }
+      }
+    },
+    "38" : {
+      "taskId" : 38,
+      "index" : 8,
+      "attempt" : 0,
+      "launchTime" : "2016-05-22T20:58:22.106GMT",
+      "executorId" : "1",
+      "host" : "ip-172-31-17-133.us-west-2.compute.internal",
+      "taskLocality" : "PROCESS_LOCAL",
+      "speculative" : false,
+      "accumulatorUpdates" : [ ],
+      "taskMetrics" : {
+        "executorDeserializeTime" : 2,
+        "executorRunTime" : 0,
+        "resultSize" : 2195,
+        "jvmGcTime" : 0,
+        "resultSerializationTime" : 0,
+        "memoryBytesSpilled" : 0,
+        "diskBytesSpilled" : 0,
+        "inputMetrics" : {
+          "bytesRead" : 101309400,
+          "recordsRead" : 1
+        }
+      }
+    },
+    "31" : {
+      "taskId" : 31,
+      "index" : 1,
+      "attempt" : 0,
+      "launchTime" : "2016-05-22T20:58:22.061GMT",
+      "executorId" : "1",
+      "host" : "ip-172-31-17-133.us-west-2.compute.internal",
+      "taskLocality" : "PROCESS_LOCAL",
+      "speculative" : false,
+      "accumulatorUpdates" : [ ],
+      "taskMetrics" : {
+        "executorDeserializeTime" : 31,
+        "executorRunTime" : 1,
+        "resultSize" : 2195,
+        "jvmGcTime" : 0,
+        "resultSerializationTime" : 0,
+        "memoryBytesSpilled" : 0,
+        "diskBytesSpilled" : 0,
+        "inputMetrics" : {
+          "bytesRead" : 105322704,
+          "recordsRead" : 1
+        }
+      }
+    },
+    "34" : {
+      "taskId" : 34,
+      "index" : 4,
+      "attempt" : 0,
+      "launchTime" : "2016-05-22T20:58:22.064GMT",
+      "executorId" : "1",
+      "host" : "ip-172-31-17-133.us-west-2.compute.internal",
+      "taskLocality" : "PROCESS_LOCAL",
+      "speculative" : false,
+      "accumulatorUpdates" : [ ],
+      "taskMetrics" : {
+        "executorDeserializeTime" : 31,
+        "executorRunTime" : 1,
+        "resultSize" : 2195,
+        "jvmGcTime" : 0,
+        "resultSerializationTime" : 0,
+        "memoryBytesSpilled" : 0,
+        "diskBytesSpilled" : 0,
+        "inputMetrics" : {
+          "bytesRead" : 101378128,
+          "recordsRead" : 1
+        }
+      }
+    },
+    "37" : {
+      "taskId" : 37,
+      "index" : 7,
+      "attempt" : 0,
+      "launchTime" : "2016-05-22T20:58:22.067GMT",
+      "executorId" : "1",
+      "host" : "ip-172-31-17-133.us-west-2.compute.internal",
+      "taskLocality" : "PROCESS_LOCAL",
+      "speculative" : false,
+      "accumulatorUpdates" : [ ],
+      "taskMetrics" : {
+        "executorDeserializeTime" : 27,
+        "executorRunTime" : 0,
+        "resultSize" : 2195,
+        "jvmGcTime" : 0,
+        "resultSerializationTime" : 1,
+        "memoryBytesSpilled" : 0,
+        "diskBytesSpilled" : 0,
+        "inputMetrics" : {
+          "bytesRead" : 101417784,
+          "recordsRead" : 1
+        }
+      }
+    },
+    "36" : {
+      "taskId" : 36,
+      "index" : 6,
+      "attempt" : 0,
+      "launchTime" : "2016-05-22T20:58:22.066GMT",
+      "executorId" : "1",
+      "host" : "ip-172-31-17-133.us-west-2.compute.internal",
+      "taskLocality" : "PROCESS_LOCAL",
+      "speculative" : false,
+      "accumulatorUpdates" : [ ],
+      "taskMetrics" : {
+        "executorDeserializeTime" : 28,
+        "executorRunTime" : 1,
+        "resultSize" : 2195,
+        "jvmGcTime" : 0,
+        "resultSerializationTime" : 0,
+        "memoryBytesSpilled" : 0,
+        "diskBytesSpilled" : 0,
+        "inputMetrics" : {
+          "bytesRead" : 101396808,
+          "recordsRead" : 1
+        }
+      }
+    },
+    "30" : {
+      "taskId" : 30,
+      "index" : 0,
+      "attempt" : 0,
+      "launchTime" : "2016-05-22T20:58:22.060GMT",
+      "executorId" : "1",
+      "host" : "ip-172-31-17-133.us-west-2.compute.internal",
+      "taskLocality" : "PROCESS_LOCAL",
+      "speculative" : false,
+      "accumulatorUpdates" : [ ],
+      "taskMetrics" : {
+        "executorDeserializeTime" : 32,
+        "executorRunTime" : 0,
+        "resultSize" : 2195,
+        "jvmGcTime" : 0,
+        "resultSerializationTime" : 0,
+        "memoryBytesSpilled" : 0,
+        "diskBytesSpilled" : 0,
+        "inputMetrics" : {
+          "bytesRead" : 106805896,
+          "recordsRead" : 1
+        }
+      }
+    },
+    "39" : {
+      "taskId" : 39,
+      "index" : 9,
+      "attempt" : 0,
+      "launchTime" : "2016-05-22T20:58:22.108GMT",
+      "executorId" : "1",
+      "host" : "ip-172-31-17-133.us-west-2.compute.internal",
+      "taskLocality" : "PROCESS_LOCAL",
+      "speculative" : false,
+      "accumulatorUpdates" : [ ],
+      "taskMetrics" : {
+        "executorDeserializeTime" : 2,
+        "executorRunTime" : 0,
+        "resultSize" : 2195,
+        "jvmGcTime" : 0,
+        "resultSerializationTime" : 0,
+        "memoryBytesSpilled" : 0,
+        "diskBytesSpilled" : 0,
+        "inputMetrics" : {
+          "bytesRead" : 69655960,
+          "recordsRead" : 1
+        }
+      }
+    },
+    "33" : {
+      "taskId" : 33,
+      "index" : 3,
+      "attempt" : 0,
+      "launchTime" : "2016-05-22T20:58:22.063GMT",
+      "executorId" : "1",
+      "host" : "ip-172-31-17-133.us-west-2.compute.internal",
+      "taskLocality" : "PROCESS_LOCAL",
+      "speculative" : false,
+      "accumulatorUpdates" : [ ],
+      "taskMetrics" : {
+        "executorDeserializeTime" : 31,
+        "executorRunTime" : 1,
+        "resultSize" : 2195,
+        "jvmGcTime" : 0,
+        "resultSerializationTime" : 0,
+        "memoryBytesSpilled" : 0,
+        "diskBytesSpilled" : 0,
+        "inputMetrics" : {
+          "bytesRead" : 101573464,
+          "recordsRead" : 1
+        }
+      }
+    }
+  },
+  "executorSummary" : {
+    "1" : {
+      "taskTime" : 454,
+      "failedTasks" : 0,
+      "succeededTasks" : 10,
+      "inputBytes" : 995557448,
+      "outputBytes" : 0,
+      "shuffleRead" : 0,
+      "shuffleWrite" : 0,
+      "memoryBytesSpilled" : 0,
+      "diskBytesSpilled" : 0
+    }
+  }
+} ]
