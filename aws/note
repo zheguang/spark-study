@@ -9,3 +9,58 @@ aws emr create-cluster \
   --instance-groups '[{"InstanceCount":1,"InstanceGroupType":"MASTER","InstanceType":"c3.4xlarge","Name":"Master Instance Group"},{"InstanceCount":2,"InstanceGroupType":"CORE","InstanceType":"c3.4xlarge","Name":"Core Instance Group"}]' \
   --configurations '[{"Classification":"spark","Properties":{"maximizeResourceAllocation":"true"},"Configurations":[]}]' \
   --region us-west-2\
+
+
+sbt compile package
+
+aws s3 cp target/scala-2.11/graphx-bench_2.11-1.0.jar s3://samzhao-data/build/graphx-bench_2.11-1.0.jar
+
+aws emr add-steps --cluster-id j-DWJ93MO7EBF1 --steps Type=Spark,Name="graphx-pagerank",Args=[--deploy-mode,cluster,--master,yarn-cluster,--class,GraphXPageRank,s3://samzhao-data/build/graphx-bench_2.11-1.0.jar]
+
+yarn logs -applicationId <app_id>
+
+
+# tunnel
+# step 1
+ssh -i ~/study/spark-study/aws/samzhao.pem -N -D 8157 hadoop@ec2-###-##-##-###.compute-1.amazonaws.com
+# step 2
+# install foxyproxy http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/emr-connect-master-node-proxy.html
+# step 3
+# enter web interfaces: http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/emr-web-interfaces.html
+# ganglia: http://master-public-dns-name/ganglia/
+# spark UI: <dns>:18080
+
+
+$ ./bin/spark-submit --class org.apache.spark.examples.SparkPi \
+    --master yarn-cluster \
+    --num-executors 3 \
+    --driver-memory 4g \
+    --executor-memory 2g \
+    --executor-cores 1 \
+    lib/spark-examples*.jar \
+    10
+
+
+# To check cores per executor:
+Spark UI -> Environment
+
+
+# find internal ip
+aws emr list-instances --cluster-id j-2KH5SRXW0M96L
+
+# spark-submit picks up /etc/spark/conf/spark-defualt.conf
+# ganglia configs in spark-default.conf
+spark.metrics.conf.*.sink.ganglia.class org.apache.spark.metrics.sink.GangliaSink
+spark.metrics.conf.*.sink.ganglia.host 172.31.32.30
+spark.metrics.conf.*.sink.ganglia.mode unicast
+spark.metrics.conf.*.sink.ganglia.port 8649
+
+
+
+# REST
+curl --socks5-hostname localhost:8157 http://ec2-54-186-116-126.us-west-2.compute.amazonaws.com:18080/api/v1/applications/application_1463950319954_0001/
+# http://spark.apache.org/docs/latest/monitoring.html
+# Note: [api-id] is actually [api-id]/[attempt-id] when searching down the path
+
+# get logs
+curl --socks5-hostname localhost:8157 http://ec2-54-213-209-169.us-west-2.compute.amazonaws.com:18080/api/v1/applications/application_1464023124892_0001/logs > /tmp/foo.zip
